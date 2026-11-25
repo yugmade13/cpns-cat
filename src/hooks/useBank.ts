@@ -3,7 +3,6 @@ import {
   applyImport,
   MAX_UPLOAD_BYTES,
   parseUploadText,
-  pastedFileName,
   prepareImport,
   type BankFile,
   type ParsedUpload,
@@ -82,13 +81,6 @@ export function useBank() {
     return prepareUploads(uploads);
   }, []);
 
-  /** Sama seperti prepare, untuk teks JSON yang ditempel langsung (mis. jawaban AI). */
-  const prepareText = useCallback((text: string): PreparedFile[] => {
-    const parsed = parseUploadText('teks tempelan', text);
-    const name = parsed.fatal ? 'Teks tempelan' : pastedFileName(parsed.data);
-    return prepareUploads([{ ...parsed, name }]);
-  }, []);
-
   /** Menerapkan hasil persiapan ke bank dan menyimpannya di browser. */
   const commit = useCallback(
     async (prepared: PreparedFile[]) => {
@@ -131,7 +123,6 @@ export function useBank() {
     saveError,
     report,
     prepare,
-    prepareText,
     commit,
     cancelImport,
     dismissReport,

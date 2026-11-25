@@ -8,21 +8,23 @@ interface Props {
   selectedId: OptionId | null;
   correctId: OptionId | null;
   onSelect?: (originalId: OptionId) => void;
+  /** Mode Ujian: pilihan hanya disorot (tanpa benar/salah) dan boleh diganti. */
+  examMode?: boolean;
 }
 
-export function OptionButton({ option, isTkp, answered, selectedId, correctId, onSelect }: Props) {
+export function OptionButton({ option, isTkp, answered, selectedId, correctId, onSelect, examMode = false }: Props) {
   const isSelected = selectedId === option.originalId;
   const isCorrect = !isTkp && correctId === option.originalId;
 
-  let tone = 'border-slate-300 bg-white hover:border-royal-500 hover:bg-royal-50';
-  let letterTone = 'border-slate-300 bg-slate-50 text-navy-800';
+  let tone = 'border-slate-300 bg-white hover:border-brand hover:bg-brand-50';
+  let letterTone = 'border-slate-300 bg-slate-50 text-brand-ink';
   let status: React.ReactNode = null;
   let tkpChips: React.ReactNode = null;
 
   if (answered) {
     if (isTkp) {
-      tone = isSelected ? 'border-royal-600 bg-royal-50 ring-1 ring-royal-600' : 'border-slate-200 bg-white';
-      letterTone = isSelected ? 'border-royal-600 bg-royal-600 text-white' : 'border-slate-300 bg-slate-50 text-slate-600';
+      tone = isSelected ? 'border-brand bg-brand-50 ring-1 ring-brand' : 'border-slate-200 bg-white';
+      letterTone = isSelected ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-slate-50 text-slate-600';
       // Untuk TKP, chip ditaruh di bawah teks agar kolom teks tetap lebar di layar HP.
       status = null;
       tkpChips = (
@@ -30,7 +32,7 @@ export function OptionButton({ option, isTkp, answered, selectedId, correctId, o
           <span className={`chip ${option.score === 5 ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-700'}`}>
             Skor {option.score}
           </span>
-          {isSelected && <span className="chip bg-royal-600 text-white">Pilihanmu</span>}
+          {isSelected && <span className="chip bg-brand text-white">Pilihanmu</span>}
         </span>
       );
     } else if (isCorrect) {
@@ -55,6 +57,10 @@ export function OptionButton({ option, isTkp, answered, selectedId, correctId, o
       tone = 'border-slate-200 bg-white opacity-75';
       letterTone = 'border-slate-200 bg-slate-50 text-slate-500';
     }
+  } else if (examMode && isSelected) {
+    tone = 'border-brand bg-brand-50 ring-2 ring-brand';
+    letterTone = 'border-brand bg-brand text-white';
+    status = <span className="chip bg-brand text-white">Jawabanmu</span>;
   }
 
   const content = (
@@ -83,6 +89,7 @@ export function OptionButton({ option, isTkp, answered, selectedId, correctId, o
       type="button"
       className={`${className} ${answered ? 'cursor-default' : 'cursor-pointer'}`}
       disabled={answered}
+      aria-pressed={examMode ? isSelected : undefined}
       aria-label={`Opsi ${option.label}: ${option.text}`}
       onClick={() => onSelect(option.originalId)}
     >

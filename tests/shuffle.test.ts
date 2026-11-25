@@ -5,6 +5,8 @@ import { OPTION_IDS } from '../src/types';
 import { fixtureBank, makeChoice, seededRng } from './helpers';
 
 const ITERATIONS = 5000;
+/** Batas waktu untuk test yang mengacak ribuan kali (bawaan Vitest hanya 5 detik). */
+const HEAVY = 60_000;
 const bank = fixtureBank();
 
 describe('shuffleArray', () => {
@@ -54,7 +56,7 @@ describe('buildSessionQuestion', () => {
         }
       }
     }
-  });
+  }, HEAVY);
 
   it('benar-benar mengacak opsi bila diizinkan', () => {
     const rng = seededRng(3);
@@ -90,7 +92,7 @@ describe('buildSession', () => {
       expect(new Set(ids).size).toBe(ids.length);
       expect(ids.length).toBe(Math.min(count, bank.length));
     }
-  });
+  }, HEAVY);
 
   it('mengacak urutan soal', () => {
     const rng = seededRng(11);

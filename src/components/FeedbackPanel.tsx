@@ -13,7 +13,7 @@ interface Props {
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={className}>
-      <h3 className="mb-1.5 text-sm font-bold uppercase tracking-wide text-navy-700">{title}</h3>
+      <h3 className="mb-1.5 text-sm font-bold uppercase tracking-wide text-brand-ink">{title}</h3>
       <div className="text-[15px] leading-relaxed text-slate-700 sm:text-base">{children}</div>
     </section>
   );
@@ -64,14 +64,14 @@ function ChoiceFeedback({ sq, q, answer }: { sq: SessionQuestion; q: ChoiceQuest
       </Section>
 
       {q.reference && (
-        <Section title={q.category === 'TWK' ? 'Dasar dan Rujukan' : 'Rujukan'} className="rounded-lg bg-navy-50 p-3">
+        <Section title={q.category === 'TWK' ? 'Dasar dan Rujukan' : 'Rujukan'} className="rounded-lg bg-brand-50 p-3">
           <p>{q.reference}</p>
         </Section>
       )}
 
       {q.solutionSteps.length > 0 && (
         <Section title="Langkah Penyelesaian">
-          <ol className="list-decimal space-y-1 pl-5 marker:font-semibold marker:text-navy-700">
+          <ol className="list-decimal space-y-1 pl-5 marker:font-semibold marker:text-brand-ink">
             {q.solutionSteps.map((s, i) => (
               <li key={i} className="wrap-break-word">
                 {s}
@@ -82,8 +82,8 @@ function ChoiceFeedback({ sq, q, answer }: { sq: SessionQuestion; q: ChoiceQuest
       )}
 
       {q.shortcut && (
-        <div className="rounded-lg border-l-4 border-royal-600 bg-royal-50 p-3 sm:p-4">
-          <h3 className="mb-1 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-royal-700">
+        <div className="rounded-lg border-l-4 border-brand bg-brand-50 p-3 sm:p-4">
+          <h3 className="mb-1 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-brand-ink">
             <BoltIcon className="h-4 w-4" /> Cara Cepat
           </h3>
           <p className="text-[15px] leading-relaxed text-slate-800 sm:text-base">{q.shortcut}</p>
@@ -92,9 +92,9 @@ function ChoiceFeedback({ sq, q, answer }: { sq: SessionQuestion; q: ChoiceQuest
 
       {q.timeTip && (
         <p className="flex items-start gap-2 text-[15px] text-slate-700">
-          <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-royal-600" />
+          <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-ink" />
           <span>
-            <strong className="text-navy-800">Tips Hemat Waktu:</strong> {q.timeTip}
+            <strong className="text-brand-ink">Tips Hemat Waktu:</strong> {q.timeTip}
           </span>
         </p>
       )}
@@ -146,10 +146,10 @@ function TkpFeedback({ sq, q, answer }: { sq: SessionQuestion; q: TkpQuestion; a
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Section title="Kompetensi yang Diuji" className="rounded-lg bg-navy-50 p-3">
+        <Section title="Kompetensi yang Diuji" className="rounded-lg bg-brand-50 p-3">
           <p>{q.competency || '—'}</p>
         </Section>
-        <Section title="Prinsip Perilaku" className="rounded-lg bg-navy-50 p-3">
+        <Section title="Prinsip Perilaku" className="rounded-lg bg-brand-50 p-3">
           <p>{q.principle || '—'}</p>
         </Section>
       </div>
@@ -161,7 +161,7 @@ function TkpFeedback({ sq, q, answer }: { sq: SessionQuestion; q: TkpQuestion; a
             return (
               <li
                 key={o.originalId}
-                className={`flex gap-3 rounded-lg border p-3 ${mine ? 'border-royal-600 bg-royal-50' : 'border-slate-200'}`}
+                className={`flex gap-3 rounded-lg border p-3 ${mine ? 'border-brand bg-brand-50' : 'border-slate-200'}`}
               >
                 <span
                   className={`flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg text-white ${
@@ -174,7 +174,7 @@ function TkpFeedback({ sq, q, answer }: { sq: SessionQuestion; q: TkpQuestion; a
                 <div className="min-w-0 flex-1">
                   <p className="wrap-break-word font-medium text-slate-800">
                     <span className="font-bold text-slate-500">{o.label}.</span> {o.text}
-                    {mine && <span className="chip ml-2 bg-royal-600 text-white">Pilihanmu</span>}
+                    {mine && <span className="chip ml-2 bg-brand text-white">Pilihanmu</span>}
                   </p>
                   <p className="mt-1 wrap-break-word text-slate-600">{relabelText(o.explanation ?? '', sq)}</p>
                 </div>

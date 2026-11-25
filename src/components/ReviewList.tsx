@@ -40,7 +40,7 @@ export function ReviewList({ questions, answers, bookmarkEnabled, isBookmarked, 
             aria-checked={filter === value}
             onClick={() => setFilter(value)}
             className={`min-h-10 rounded-full border px-4 text-sm font-semibold ${
-              filter === value ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-800 hover:bg-navy-50'
+              filter === value ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:bg-brand-50'
             }`}
           >
             {label}
@@ -77,7 +77,7 @@ export function ReviewList({ questions, answers, bookmarkEnabled, isBookmarked, 
               <span className="min-w-0 flex-1">
                 <span className="mb-1 flex flex-wrap items-center gap-1.5">
                   {statusEl}
-                  <span className="chip bg-navy-100 text-navy-800">{q.category}</span>
+                  <span className="chip bg-brand-100 text-brand-ink">{q.category}</span>
                   <span className="text-xs text-slate-500">
                     {q.topic} · {DIFFICULTY_LABEL[q.difficulty]}
                   </span>

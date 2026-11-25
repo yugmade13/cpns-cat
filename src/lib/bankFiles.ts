@@ -52,7 +52,7 @@ export function parseUploadText(name: string, text: string): ParsedUpload {
 }
 
 /**
- * Kandidat teks JSON dari isi file atau teks tempelan, dari yang paling ketat:
+ * Kandidat teks JSON dari isi file (mis. jawaban AI yang disimpan apa adanya), dari yang paling ketat:
  * 1) teks apa adanya (tanpa pembungkus blok kode), 2) isi blok kode ```json di mana pun dalam teks
  * (mis. jawaban AI yang ikut tersalin dengan kalimat pembuka), 3) potongan dari "[" pertama sampai "]" terakhir.
  */
@@ -63,16 +63,6 @@ function jsonCandidates(text: string): string[] {
   const last = text.lastIndexOf(']');
   if (first >= 0 && last > first) out.push(text.slice(first, last + 1));
   return [...new Set(out)];
-}
-
-/** Nama file untuk teks yang ditempel: memakai awalan ID dari prompt AI bila ada, agar tempelan ulang batch yang sama menggantikannya. */
-export function pastedFileName(data: unknown, now: Date = new Date()): string {
-  const list = Array.isArray(data) ? data : [];
-  const first = list.find((q): q is { id: string } => typeof q === 'object' && q !== null && typeof (q as { id?: unknown }).id === 'string');
-  const m = first ? /^(ai\w+?)-(twk|tiu|tkp)-\d+$/i.exec(first.id) : null;
-  if (m) return `${m[1]}.json`;
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `tempelan-${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}.json`;
 }
 
 /**

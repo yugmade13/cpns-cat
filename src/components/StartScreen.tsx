@@ -3,11 +3,10 @@ import type { Bank } from '../hooks/useBank';
 import type { StoredIds } from '../hooks/useStoredIds';
 import { describeCounts } from '../lib/bankFiles';
 import { suggestedTimer } from '../lib/sessionTimer';
-import { TIMER_OPTIONS, type Question, type TimerSetting } from '../types';
+import { TIMER_OPTIONS, type Question, type SessionMode, type TimerSetting } from '../types';
 import { BankManager } from './BankManager';
 import { ConfirmDialog } from './ConfirmDialog';
 import { CheckIcon } from './Icons';
-import { OfficialNotice } from './OfficialNotice';
 
 export interface PracticeSelection {
   questions: Question[];
@@ -20,6 +19,8 @@ interface Props {
   timer: TimerSetting;
   onTimerChange: (t: TimerSetting) => void;
   /** Pilihan soal terakhir (diingat antarsesi). */
+  mode: SessionMode;
+  onModeChange: (m: SessionMode) => void;
   selectedKey: string;
   onSelect: (key: string) => void;
   onStart: (selection: PracticeSelection) => void;
@@ -36,14 +37,14 @@ interface Choice extends PracticeSelection {
 /** Pilihan soal yang bisa dilatih: semua soal, per file (jika lebih dari satu), bookmark, dan soal yang pernah salah. */
 function buildChoices(bank: Bank, stored: StoredIds): Choice[] {
   const choices: Choice[] = [
-    { key: 'all', label: 'Semua soal', title: 'Latihan Semua Soal', questions: bank.all },
+    { key: 'all', label: 'Semua soal', title: 'Semua Soal', questions: bank.all },
   ];
   if (bank.files.length > 1) {
     for (const f of bank.files) {
       choices.push({
         key: `file:${f.name}`,
         label: f.name.replace(/\.json$/i, ''),
-        title: `Latihan ${f.name.replace(/\.json$/i, '')}`,
+        title: f.name.replace(/\.json$/i, ''),
         questions: f.questions,
       });
     }
@@ -54,14 +55,14 @@ function buildChoices(bank: Bank, stored: StoredIds): Choice[] {
     const bookmarked = bank.all.filter((q) => bm.has(q.id));
     const wrong = bank.all.filter((q) => wr.has(q.id));
     if (bookmarked.length > 0) {
-      choices.push({ key: 'bookmark', label: 'Soal yang di-bookmark', title: 'Latihan Soal Bookmark', questions: bookmarked });
+      choices.push({ key: 'bookmark', label: 'Soal yang di-bookmark', title: 'Soal Bookmark', questions: bookmarked });
     }
     if (wrong.length > 0) {
       choices.push({
         key: 'wrong',
         label: 'Soal yang pernah salah',
         hint: 'Soal keluar dari daftar ini setelah dijawab benar.',
-        title: 'Latihan Soal yang Pernah Salah',
+        title: 'Soal yang Pernah Salah',
         questions: wrong,
       });
     }
@@ -69,7 +70,12 @@ function buildChoices(bank: Bank, stored: StoredIds): Choice[] {
   return choices;
 }
 
-export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, onSelect: setSelectedKey, onStart }: Props) {
+const MODES: { value: SessionMode; label: string; hint: string }[] = [
+  { value: 'practice', label: 'Latihan', hint: 'Jawaban langsung dikunci dan pembahasan muncul setiap soal.' },
+  { value: 'exam', label: 'Ujian', hint: 'Seperti CAT: bebas pindah nomor dan ganti jawaban, tandai ragu-ragu. Skor dan pembahasan muncul setelah ujian selesai.' },
+];
+
+export function StartScreen({ bank, stored, timer, onTimerChange, mode, onModeChange, selectedKey, onSelect: setSelectedKey, onStart }: Props) {
   const [confirmClear, setConfirmClear] = useState(false);
   const closeClear = useCallback(() => setConfirmClear(false), []);
 
@@ -86,8 +92,7 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 px-3 py-5 sm:px-6 sm:py-8">
       <header className="space-y-3 text-center">
-        <OfficialNotice />
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl">Latihan SKD CPNS 2027</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-brand-ink sm:text-3xl">Simulasi SKD CPNS 2027</h1>
         <p className="mx-auto max-w-xl text-[16px] text-slate-600">
           Persiapkan dirimu dengan latihan terstruktur dan pembahasan lengkap.
         </p>
@@ -109,7 +114,7 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
       <section className="card space-y-6 p-4 sm:p-6">
         {choices.length > 1 ? (
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-navy-900">Soal yang dilatih</legend>
+            <legend className="mb-2 text-sm font-semibold text-brand-ink">Soal yang dilatih</legend>
             <div className="space-y-2" role="radiogroup" aria-label="Soal yang dilatih">
               {choices.map((c) => {
                 const active = c.key === selected.key;
@@ -121,12 +126,12 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
                     aria-checked={active}
                     onClick={() => setSelectedKey(c.key)}
                     className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
-                      active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-900 hover:border-royal-500 hover:bg-royal-50'
+                      active ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:border-brand hover:bg-brand-50'
                     }`}
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold wrap-break-word">{c.label}</span>
-                      <span className={`block text-xs ${active ? 'text-navy-100' : 'text-slate-500'}`}>
+                      <span className={`block text-xs ${active ? 'text-white/85' : 'text-slate-500'}`}>
                         {describeCounts(c.questions)}
                         {c.hint && ` · ${c.hint}`}
                       </span>
@@ -138,16 +143,37 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
             </div>
           </fieldset>
         ) : (
-          <div className="rounded-xl bg-navy-50 p-4 text-center">
-            <p className="text-3xl font-extrabold tabular-nums text-navy-900">{selected.questions.length}</p>
-            <p className="text-sm font-semibold text-navy-800">soal siap dilatih</p>
+          <div className="rounded-xl bg-brand-50 p-4 text-center">
+            <p className="text-3xl font-extrabold tabular-nums text-brand-ink">{selected.questions.length}</p>
+            <p className="text-sm font-semibold text-brand-ink">soal siap dilatih</p>
             <p className="mt-1 text-sm text-slate-600">{describeCounts(selected.questions)}</p>
           </div>
         )}
 
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold text-navy-900">Waktu latihan</legend>
-          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Waktu latihan">
+          <legend className="mb-2 text-sm font-semibold text-brand-ink">Mode</legend>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Mode">
+            {MODES.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                role="radio"
+                aria-checked={mode === m.value}
+                onClick={() => onModeChange(m.value)}
+                className={`min-h-12 rounded-lg border px-2 text-[15px] font-semibold transition-colors ${
+                  mode === m.value ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:border-brand hover:bg-brand-50'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-sm text-slate-600">{MODES.find((m) => m.value === mode)!.hint}</p>
+        </fieldset>
+
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold text-brand-ink">Waktu</legend>
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Waktu">
             {TIMER_OPTIONS.map((t) => {
               const active = timer === t;
               const isSuggested = t === suggested;
@@ -159,11 +185,11 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
                   aria-checked={active}
                   onClick={() => onTimerChange(t)}
                   className={`flex min-h-12 flex-col items-center justify-center rounded-lg border px-1 py-1 text-[15px] font-semibold leading-tight transition-colors ${
-                    active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-800 hover:border-royal-500 hover:bg-royal-50'
+                    active ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:border-brand hover:bg-brand-50'
                   }`}
                 >
                   {t === 0 ? 'Tanpa batas' : `${t} menit`}
-                  {isSuggested && <span className={`text-[11px] font-medium ${active ? 'text-navy-100' : 'text-royal-600'}`}>saran</span>}
+                  {isSuggested && <span className={`text-[11px] font-medium ${active ? 'text-white/85' : 'text-brand-ink'}`}>saran</span>}
                 </button>
               );
             })}
@@ -171,7 +197,7 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
           <p className="mt-2 text-sm text-slate-600">
             {timer === 0
               ? `Tanpa batas waktu. Untuk simulasi ujian, disarankan sekitar ${suggested} menit untuk ${n} soal (±1 menit per soal).`
-              : `Waktu dihitung untuk seluruh latihan (${n} soal, rata-rata ${perQuestion} per soal). Jika waktu habis, soal yang belum dijawab dihitung tidak terjawab.`}
+              : `Waktu dihitung untuk seluruh sesi (${n} soal, rata-rata ${perQuestion} per soal). Jika waktu habis, soal yang belum dijawab dihitung tidak terjawab.`}
           </p>
         </fieldset>
 
@@ -181,16 +207,16 @@ export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, o
             className="btn-primary w-full text-base"
             onClick={() => onStart({ questions: selected.questions, title: selected.title })}
           >
-            Mulai Latihan ({selected.questions.length} soal)
+            {mode === 'exam' ? 'Mulai Ujian' : 'Mulai Latihan'} ({selected.questions.length} soal)
           </button>
-          <p className="text-center text-sm text-slate-500">Urutan soal dan pilihan jawaban diacak setiap latihan.</p>
+          <p className="text-center text-sm text-slate-500">Urutan soal dan pilihan jawaban diacak setiap sesi.</p>
         </div>
       </section>
 
       <BankManager bank={bank} />
 
       <section className="card space-y-2 p-4 text-[15px]">
-        <h2 className="font-semibold text-navy-900">Data Tersimpan di Perangkat</h2>
+        <h2 className="font-semibold text-brand-ink">Data Tersimpan di Perangkat</h2>
         {stored.available ? (
           <>
             <p className="text-slate-600">

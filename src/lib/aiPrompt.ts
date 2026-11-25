@@ -131,8 +131,8 @@ ${plan}
 - Tingkat kesulitan: ${diff}.
 
 FORMAT KELUARAN (WAJIB)
-- Tulis SEMUA soal sebagai SATU array JSON yang valid di dalam SATU blok kode berlabel json (diawali ${FENCE}json dan diakhiri ${FENCE}), supaya bisa disalin sekali klik. Jangan memecahnya ke beberapa blok kode.
-- Jika kamu bisa membuat file yang dapat diunduh, buat juga file bernama "${o.idPrefix}.json" berisi array yang sama persis.
+- Buat SATU file yang dapat diunduh bernama "${o.idPrefix}.json" berisi SEMUA soal sebagai satu array JSON yang valid. File ini akan langsung diunggah ke aplikasi.
+- Jika kamu tidak bisa membuat file, tulis array JSON itu di dalam SATU blok kode berlabel json (diawali ${FENCE}json dan diakhiri ${FENCE}) agar pengguna bisa menyalin dan menyimpannya sebagai file "${o.idPrefix}.json". Jangan memecahnya ke beberapa blok kode.
 - Jangan menulis komentar di dalam JSON. Di luar blok kode, cukup satu kalimat singkat atau tidak sama sekali.
 - Gunakan tanda kutip ganda yang benar, tanpa koma di akhir elemen terakhir. Baris baru di dalam teks ditulis sebagai "\\n".
 - Semua soal ada di satu array; kategori ditentukan oleh field "category".

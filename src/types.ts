@@ -1,4 +1,4 @@
-// Model data inti aplikasi Latihan SKD CPNS.
+// Model data inti aplikasi Simulasi SKD CPNS.
 
 export type Category = 'TWK' | 'TIU' | 'TKP';
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -68,9 +68,16 @@ export type CategoryFilter = Category | 'MIX';
 /** Waktu total satu sesi latihan dalam menit (0 = tanpa batas waktu). */
 export type TimerSetting = 0 | 10 | 15 | 20 | 30 | 45 | 60;
 export const TIMER_OPTIONS: readonly TimerSetting[] = [0, 10, 15, 20, 30, 45, 60];
+/**
+ * practice: tiap soal langsung dikunci dan pembahasan muncul.
+ * exam: seperti CAT — jawaban bisa diganti, bebas pindah nomor, pembahasan & skor di akhir.
+ */
+export type SessionMode = 'practice' | 'exam';
+
 export interface SessionConfig {
   /** Waktu total sesi dalam menit (0 = tanpa batas). */
   timer: TimerSetting;
+  mode: SessionMode;
 }
 
 /** Opsi setelah diacak: label tampilan baru, id asli tetap disimpan. */

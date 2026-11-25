@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildAiPrompt, makeIdPrefix } from '../src/lib/aiPrompt';
 import { suggestedTimer } from '../src/lib/sessionTimer';
-import { parseUploadText, pastedFileName, prepareImport } from '../src/lib/bankFiles';
+import { parseUploadText, prepareImport } from '../src/lib/bankFiles';
 import { normalizeRaw } from '../src/lib/loader';
 import { validateQuestion } from '../src/lib/validate';
 import { fixtureBank } from './helpers';
@@ -23,8 +23,9 @@ describe('prompt AI', () => {
     expect(p).toContain('ATURAN TWK');
     expect(p).toContain('ATURAN TIU');
     expect(p).toContain('ATURAN TKP');
+    expect(p).toContain('Buat SATU file yang dapat diunduh bernama "ai2611251432xy.json"');
     expect(p).toContain('SATU blok kode berlabel json (diawali ```json');
-    expect(p).toContain('file bernama "ai2611251432xy.json"');
+
   });
 
   it('kategori tunggal + topik: hanya aturan kategori itu dan topik yang dipilih', () => {
@@ -56,7 +57,7 @@ describe('prompt AI', () => {
 describe('unggah jawaban AI', () => {
   const FENCE = '```';
 
-  it('teks tempelan berisi kalimat pembuka + blok kode tetap terbaca', () => {
+  it('file berisi kalimat pembuka AI + blok kode tetap terbaca', () => {
     const json = JSON.stringify(fixtureBank());
     const pasted = `Tentu! Berikut 17 soal sesuai permintaan:\n\n${FENCE}json\n${json}\n${FENCE}\n\nSemoga membantu.`;
     const u = parseUploadText('x', pasted);
@@ -64,19 +65,14 @@ describe('unggah jawaban AI', () => {
     expect(prepareImport([], [u])[0]!.questions).toHaveLength(17);
   });
 
-  it('teks tanpa blok kode tetapi dengan kalimat pembuka tetap terbaca', () => {
+  it('file tanpa blok kode tetapi dengan kalimat pembuka tetap terbaca', () => {
     const u = parseUploadText('x', 'Berikut soalnya:\n' + JSON.stringify(fixtureBank()) + '\nSelesai.');
     expect(u.fatal).toBeNull();
   });
 
-  it('teks rusak/terpotong ditolak dengan pesan ramah', () => {
+  it('file rusak/terpotong ditolak dengan pesan ramah', () => {
     expect(parseUploadText('x', '[{"id": "a", "category": "TWK"').fatal).toMatch(/bukan JSON yang valid/);
     expect(parseUploadText('x', '   ').fatal).toMatch(/kosong/);
-  });
-
-  it('nama tempelan memakai awalan ID dari prompt AI', () => {
-    expect(pastedFileName([{ id: 'ai2611251432xy-tiu-001' }])).toBe('ai2611251432xy.json');
-    expect(pastedFileName([{ id: 'soal-01' }], new Date(2026, 10, 25, 9, 5, 7))).toBe('tempelan-20261125-090507.json');
   });
 
   it('menerima JSON yang dibungkus blok kode ```json', () => {

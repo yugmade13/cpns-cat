@@ -17,22 +17,7 @@ export function UploadPanel({ bank, label = 'Pilih File JSON', showReport = true
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState<PreparedFile[] | null>(null);
-  const [mode, setMode] = useState<'file' | 'text'>('file');
-  const [text, setText] = useState('');
   const { commit, cancelImport, dismissReport } = bank;
-
-  /** Menyimpan hasil; jika berasal dari teks tempelan dan berhasil, kosongkan kotak teks. */
-  const save = async (prepared: PreparedFile[]) => {
-    await commit(prepared);
-    if (mode === 'text' && prepared.some((p) => p.questions.length > 0)) setText('');
-  };
-
-  const handleText = () => {
-    dismissReport();
-    const prepared = bank.prepareText(text);
-    if (prepared.some((p) => p.replaces)) setPending(prepared);
-    else void save(prepared);
-  };
 
   const handleFiles = async (list: FileList | null | undefined) => {
     const arr = list ? [...list] : [];
@@ -43,7 +28,7 @@ export function UploadPanel({ bank, label = 'Pilih File JSON', showReport = true
     try {
       const prepared = await bank.prepare(arr);
       if (prepared.some((p) => p.replaces)) setPending(prepared);
-      else await save(prepared);
+      else await commit(prepared);
     } finally {
       setBusy(false);
     }
@@ -57,56 +42,9 @@ export function UploadPanel({ bank, label = 'Pilih File JSON', showReport = true
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1" role="tablist" aria-label="Cara memasukkan soal">
-        {(
-          [
-            ['file', 'Unggah File'],
-            ['text', 'Tempel Teks'],
-          ] as const
-        ).map(([value, text]) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={mode === value}
-            onClick={() => setMode(value)}
-            className={`min-h-10 rounded-md text-sm font-semibold ${mode === value ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-600 hover:text-navy-800'}`}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
-
-      {mode === 'text' ? (
-        <div className="space-y-2">
-          <label className="block">
-            <span className="mb-1.5 block text-sm text-slate-600">
-              Tempel jawaban AI atau isi JSON di sini. Kalimat pembuka dari AI dan pembungkus blok kode akan diabaikan.
-            </span>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              aria-label="Teks JSON soal"
-              placeholder='[ { "id": "…", "category": "TWK", … } ]'
-              spellCheck={false}
-              className="block h-44 w-full resize-y rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs leading-relaxed text-slate-800"
-            />
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <button type="button" className="btn-primary" disabled={text.trim() === ''} onClick={handleText}>
-              Muat Soal dari Teks
-            </button>
-            {text !== '' && (
-              <button type="button" className="btn-ghost" onClick={() => setText('')}>
-                Kosongkan
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
       <label
-        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-royal-500 ${
-          dragging ? 'border-royal-500 bg-royal-50' : 'border-slate-300 bg-slate-50 hover:border-royal-500 hover:bg-royal-50'
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand ${
+          dragging ? 'border-brand bg-brand-50' : 'border-slate-300 bg-slate-50 hover:border-brand hover:bg-brand-50'
         } ${busy ? 'pointer-events-none opacity-60' : ''}`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -133,7 +71,6 @@ export function UploadPanel({ bank, label = 'Pilih File JSON', showReport = true
           onChange={(e) => void handleFiles(e.target.files)}
         />
       </label>
-      )}
 
       {showReport && <UploadReport bank={bank} />}
 
@@ -149,7 +86,7 @@ export function UploadPanel({ bank, label = 'Pilih File JSON', showReport = true
         onConfirm={() => {
           const p = pending;
           setPending(null);
-          if (p) void save(p);
+          if (p) void commit(p);
         }}
         onCancel={cancelReplace}
       />

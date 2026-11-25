@@ -15,7 +15,7 @@ export function BankManager({ bank }: { bank: Bank }) {
 
   return (
     <details className="card group" open={initiallyOpen}>
-      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold text-navy-800 hover:bg-slate-50">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 font-semibold text-brand-ink hover:bg-slate-50">
         <span>
           Kelola Bank Soal{' '}
           <span className="font-normal text-slate-500">
@@ -49,7 +49,7 @@ export function BankManager({ bank }: { bank: Bank }) {
         </ul>
 
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-navy-900">Tambah atau perbarui soal</h3>
+          <h3 className="mb-2 text-sm font-semibold text-brand-ink">Tambah atau perbarui soal</h3>
           <UploadPanel bank={bank} label="Unggah File JSON" />
           <p className="mt-2 text-sm text-slate-500">
             Mengunggah file dengan nama yang sama akan mengganti isi file lama (kamu akan diminta konfirmasi dulu).
@@ -57,7 +57,7 @@ export function BankManager({ bank }: { bank: Bank }) {
         </div>
 
         <details className="group/ai rounded-lg ring-1 ring-slate-200">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 font-semibold text-navy-800 hover:bg-slate-50">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 font-semibold text-brand-ink hover:bg-slate-50">
             Buat soal baru dengan AI
             <span className="text-slate-400 transition-transform group-open/ai:rotate-180" aria-hidden="true">
               ▾

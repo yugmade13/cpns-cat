@@ -67,7 +67,7 @@ describe('summarizeSession', () => {
 
 describe('timer total sesi (quizReducer)', () => {
   const qs = [buildSessionQuestion(makeChoice({ id: 'a' })), buildSessionQuestion(makeChoice({ id: 'b' })), buildSessionQuestion(makeTkp({ id: 'c' }))];
-  const config = { timer: 30 } as const;
+  const config = { timer: 30, mode: 'practice' } as const;
 
   it('batas waktu = waktu mulai + menit timer; tanpa timer = null', () => {
     const s = quizReducer(null, { type: 'start', config, title: 't', questions: qs, now: 1_000 })!;
@@ -93,5 +93,64 @@ describe('timer total sesi (quizReducer)', () => {
     expect(sum.reviewIds).toEqual(['b', 'c']);
     // Setelah selesai, aksi lain diabaikan.
     expect(quizReducer(s, { type: 'answer', originalId: 'A' })).toBe(s);
+  });
+});
+
+describe('Mode Ujian (quizReducer)', () => {
+  const qs = [buildSessionQuestion(makeChoice({ id: 'a' })), buildSessionQuestion(makeChoice({ id: 'b' })), buildSessionQuestion(makeTkp({ id: 'c' }))];
+  const start = () => quizReducer(null, { type: 'start', config: { timer: 0, mode: 'exam' }, title: 't', questions: qs, now: 0 });
+
+  it('jawaban boleh diganti; Mode Latihan tetap mengunci jawaban pertama', () => {
+    let s = start();
+    s = quizReducer(s, { type: 'answer', originalId: 'A' });
+    s = quizReducer(s, { type: 'answer', originalId: 'B' })!;
+    expect(s.answers[0]).toEqual({ selectedOriginalId: 'B' });
+    let p = quizReducer(null, { type: 'start', config: { timer: 0, mode: 'practice' }, title: 't', questions: qs, now: 0 });
+    p = quizReducer(p, { type: 'answer', originalId: 'A' });
+    p = quizReducer(p, { type: 'answer', originalId: 'B' })!;
+    expect(p.answers[0]).toEqual({ selectedOriginalId: 'A' });
+  });
+
+  it('bebas pindah soal tanpa harus menjawab, dalam batas nomor', () => {
+    let s = start();
+    s = quizReducer(s, { type: 'next' });
+    expect(s!.index).toBe(1);
+    s = quizReducer(s, { type: 'goto', index: 2 });
+    s = quizReducer(s, { type: 'next' });
+    expect(s!.index).toBe(2); // sudah di soal terakhir
+    expect(s!.finished).toBe(false); // ujian hanya selesai lewat "finish"
+    s = quizReducer(s, { type: 'goto', index: 99 });
+    expect(s!.index).toBe(2);
+    s = quizReducer(s, { type: 'prev' });
+    expect(s!.index).toBe(1);
+  });
+
+  it('tanda ragu-ragu bisa dipasang dan dilepas per soal', () => {
+    let s = start();
+    s = quizReducer(s, { type: 'toggleFlag' });
+    s = quizReducer(s, { type: 'goto', index: 2 });
+    s = quizReducer(s, { type: 'toggleFlag' });
+    s = quizReducer(s, { type: 'toggleFlag' });
+    expect(s!.flags).toEqual([true, false, false]);
+  });
+
+  it('Selesai Ujian: soal kosong jadi tidak terjawab, skor dihitung dari jawaban terakhir', () => {
+    let s = start();
+    s = quizReducer(s, { type: 'answer', originalId: 'A' });
+    s = quizReducer(s, { type: 'answer', originalId: 'B' }); // diganti ke jawaban benar
+    s = quizReducer(s, { type: 'goto', index: 2 });
+    s = quizReducer(s, { type: 'answer', originalId: 'D' }); // TKP skor 4
+    s = quizReducer(s, { type: 'finish' })!;
+    expect(s.finished).toBe(true);
+    expect(s.expired).toBe(false);
+    expect(s.answers[1]).toEqual({ selectedOriginalId: null });
+    const sum = summarizeSession(s.questions, s.answers);
+    expect(sum.totalScore).toBe(5 + 4);
+    expect(sum.reviewIds).toEqual(['b']);
+  });
+
+  it('"finish" tidak berlaku di Mode Latihan', () => {
+    const p = quizReducer(null, { type: 'start', config: { timer: 0, mode: 'practice' }, title: 't', questions: qs, now: 0 });
+    expect(quizReducer(p, { type: 'finish' })).toBe(p);
   });
 });

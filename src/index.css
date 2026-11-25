@@ -2,17 +2,13 @@
 
 @theme {
   --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --color-navy-50: #eef2fb;
-  --color-navy-100: #d9e1f5;
-  --color-navy-600: #23408a;
-  --color-navy-700: #1b3374;
-  --color-navy-800: #15295e;
-  --color-navy-900: #0f1d45;
-  --color-royal-50: #eef3ff;
-  --color-royal-100: #dbe6ff;
-  --color-royal-500: #2f63e0;
-  --color-royal-600: #2453c7;
-  --color-royal-700: #1d44a6;
+  /* Warna utama aplikasi: putih + #269DD8 */
+  --color-brand: #269dd8;
+  --color-brand-hover: #1e8bc3;
+  /* Teks berwarna di atas putih memakai versi lebih gelap agar kontrasnya cukup (≈6:1). */
+  --color-brand-ink: #14628c;
+  --color-brand-50: #eaf6fc;
+  --color-brand-100: #d3ecf8;
 }
 
 @layer base {
@@ -20,11 +16,11 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-100 text-slate-800 antialiased;
+    @apply bg-white text-slate-800 antialiased;
     overflow-x: hidden;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-royal-500;
+    @apply outline-2 outline-offset-2 outline-brand;
   }
 }
 
@@ -37,16 +33,16 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-navy-800 px-5 py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-navy-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500;
   }
   .btn-secondary {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-[15px] font-semibold text-navy-800 transition-colors hover:border-royal-500 hover:bg-royal-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-[15px] font-semibold text-brand-ink transition-colors hover:border-brand hover:bg-brand-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400;
   }
   .btn-danger {
     @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-red-800;
   }
   .btn-ghost {
-    @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-navy-700 transition-colors hover:bg-navy-50;
+    @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-brand-ink transition-colors hover:bg-brand-50;
   }
   .card {
     @apply rounded-xl border border-slate-200 bg-white shadow-sm;

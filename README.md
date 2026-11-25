@@ -1,32 +1,36 @@
-# Latihan SKD CPNS 2027
+# Simulasi SKD CPNS 2027
 
-Aplikasi web latihan soal SKD CPNS (TWK, TIU, TKP) dengan umpan balik langsung dan pembahasan lengkap.
-Sepenuhnya statis: tanpa login, tanpa backend, tanpa database server.
+Aplikasi web simulasi SKD CPNS (TWK, TIU, TKP) dengan Mode Latihan (pembahasan langsung) dan Mode Ujian (seperti CAT).
+Sepenuhnya statis: tanpa login, tanpa backend, tanpa database server. Aplikasi tidak membawa soal bawaan; soal
+diunggah oleh pengguna.
 
-> **SOAL LATIHAN — BUKAN SOAL RESMI BKN.** Aplikasi tidak membawa soal bawaan; soal diunggah oleh pengguna.
+> Aplikasi simulasi mandiri, tidak berafiliasi dengan BKN. Teks ini tampil sebagai satu baris kecil di footer.
 
 ## Cara pakai
 
 1. Buka aplikasi. Jika belum ada soal, muncul layar **Unggah Bank Soal**.
-2. Unggah file `.json` berisi soal (tab **Unggah File**), atau tempel teks JSON langsung (tab **Tempel Teks**). Satu file boleh berisi TWK, TIU, dan TKP sekaligus, dan beberapa file juga bisa
+2. Unggah file `.json` berisi soal. Satu file boleh berisi TWK, TIU, dan TKP sekaligus, dan beberapa file juga bisa
    diunggah bersamaan. Format lengkap ada di **[PANDUAN_SOAL.md](PANDUAN_SOAL.md)**.
    Belum punya file soal? Buka **Buat Soal dengan AI**, pilih kategori, jumlah, kesulitan, dan topik, lalu tekan
-   **Salin Prompt**. Tempel prompt ke asisten AI (ChatGPT, Claude, Gemini, dll.). AI diminta menulis JSON di satu blok
-   kode (dan membuat file `.json` jika mampu). Salin jawabannya ke tab **Tempel Teks** lalu tekan **Muat Soal dari
-   Teks**; tidak perlu membuat file. Kalimat pembuka/penutup dari AI ikut tersalin pun tidak masalah. Jawaban yang masih dibungkus blok kode Markdown (diawali `` ```json ``) tetap diterima.
+   **Salin Prompt**. Tempel prompt ke asisten AI (ChatGPT, Claude, Gemini, dll.); AI diminta membuat file `.json` yang
+   bisa diunduh, lalu unggah file itu. Jika AI hanya menampilkan teks JSON, simpan teksnya sebagai file `.json`.
+   File yang masih berisi kalimat pembuka AI atau pembungkus blok kode Markdown (`` ```json ``) tetap diterima.
 3. Soal tersimpan di browser itu (IndexedDB), jadi tidak perlu diunggah ulang saat aplikasi dibuka lagi.
-4. Tekan **Mulai Latihan**. Semua soal yang diunggah langsung dipakai (diacak); tidak perlu memilih kategori, topik,
-   tingkat kesulitan, atau jumlah soal, karena isi latihan sudah ditentukan saat membuat file soal. Jika ada lebih dari
-   satu file, pilih "Semua soal" atau satu file tertentu. Waktu latihan bisa dibatasi (10–60 menit untuk
-   seluruh sesi).
+4. Pilih **Mode** dan **Waktu**, lalu tekan **Mulai Latihan** / **Mulai Ujian**. Semua soal yang diunggah langsung
+   dipakai (diacak); tidak perlu memilih kategori, topik, tingkat kesulitan, atau jumlah soal, karena isi sesi sudah
+   ditentukan saat membuat file soal. Jika ada lebih dari satu file, pilih "Semua soal" atau satu file tertentu.
 
 ## Fitur
 
-- Satu soal per layar; jawaban langsung dikunci dan pembahasan muncul:
+- **Mode Ujian** (seperti CAT): tanpa pembahasan saat mengerjakan; jawaban bisa diganti; pindah soal lewat
+  Sebelumnya/Berikutnya atau **panel nomor soal** (warna: terjawab, ragu-ragu, belum dijawab); tanda **Ragu-ragu**;
+  tombol **Selesai Ujian** dengan konfirmasi jumlah soal yang belum dijawab. Skor, pembahasan, dan daftar "pernah salah"
+  diperbarui setelah ujian selesai. Keyboard: 1–5/A–E memilih, panah kiri/kanan atau Enter pindah soal.
+- **Mode Latihan**: satu soal per layar; jawaban langsung dikunci dan pembahasan muncul:
   - TWK/TIU: benar/salah (warna + ikon + teks), pembahasan, dasar rujukan, langkah hitung, **Cara Cepat**, dan **Tips Hemat Waktu**.
   - TKP: skor pilihan (1–5), skor dan alasan kelima opsi, kompetensi, prinsip, dan pelajaran kerja.
 - Urutan soal dan opsi diacak tiap sesi; kunci/skor mengikuti isi opsi, bukan hurufnya.
-- **Waktu latihan** (timer total per sesi, seperti ujian): tanpa batas, 10, 15, 20, 30, 45, atau 60 menit, dengan saran
+- **Waktu** (timer total per sesi, berlaku untuk kedua mode): tanpa batas, 10, 15, 20, 30, 45, atau 60 menit, dengan saran
   otomatis ±1 menit per soal (mis. 45 soal → 45 menit). Hitung mundur tampil di header dan berwarna merah di menit
   terakhir. Jika waktu habis, soal yang belum dijawab dihitung tidak terjawab dan layar hasil langsung ditampilkan.
 - Dari layar hasil, tombol **Latihan Topik Ini** memulai latihan khusus topik yang masih sering salah.
@@ -37,7 +41,7 @@ Sepenuhnya statis: tanpa login, tanpa backend, tanpa database server.
   dengan awalan ID unik setiap kali disalin agar batch berbeda tidak bentrok ID. Jika browser menolak akses clipboard,
   prompt ditampilkan untuk disalin manual.
 - Layar mulai menampilkan jumlah soal per kategori, pilihan sumber soal (semua, per file, bookmark, pernah salah),
-  dan waktu latihan. Pilihan terakhir diingat selama aplikasi terbuka.
+  mode, dan waktu. Pilihan terakhir diingat selama aplikasi terbuka.
 - Bookmark dan daftar soal yang pernah salah (localStorage), dengan tombol **Hapus Data Tersimpan** yang terpisah dari
   bank soal.
 - Mobile first, mendukung keyboard (1–5 / A–E memilih, Enter lanjut).
@@ -108,7 +112,7 @@ tests/               unit test Vitest (shuffle, scoring + timer sesi, validate, 
 - Aplikasi tidak menyertakan soal; kualitas dan kebenaran soal menjadi tanggung jawab penulis file soal.
   Validator memeriksa format, bukan kebenaran isi atau hitungan. Ini juga berlaku untuk soal buatan AI: AI bisa
   keliru soal fakta TWK maupun hitungan TIU, jadi periksa ulang sebelum dipakai.
-- Soal adalah **soal latihan, bukan soal resmi BKN**.
+- Aplikasi ini simulasi mandiri dan **tidak berafiliasi dengan BKN**; soal berasal dari pengguna, bukan soal resmi.
 - Data yang disimpan, semuanya hanya di browser pengguna dan tidak dikirim ke mana pun:
   - bank soal hasil unggahan (IndexedDB);
   - ID soal yang di-bookmark dan ID soal yang pernah salah (localStorage).

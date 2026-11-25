@@ -49,14 +49,13 @@ export function AiPromptPanel() {
         <li>Atur jenis soal di bawah, lalu tekan <strong>Salin Prompt</strong>.</li>
         <li>Tempel prompt ke asisten AI pilihanmu (ChatGPT, Claude, Gemini, dan lainnya).</li>
         <li>
-          Salin jawaban AI (pakai tombol <em>Copy</em> pada blok kodenya), lalu buka tab <strong>Tempel Teks</strong> di
-          aplikasi ini dan tekan <strong>Muat Soal dari Teks</strong>. Jika AI membuatkan file <strong>.json</strong>,
-          unduh lalu pakai tab <strong>Unggah File</strong>.
+          Unduh file <strong>.json</strong> yang dibuat AI, lalu unggah di aplikasi ini. Jika AI hanya menampilkan teks JSON,
+          salin teksnya dan simpan sebagai file berakhiran <strong>.json</strong>.
         </li>
       </ol>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-navy-900">Kategori</legend>
+        <legend className="mb-2 text-sm font-semibold text-brand-ink">Kategori</legend>
         <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Kategori soal AI">
           {CATS.map((c) => (
             <button
@@ -66,7 +65,7 @@ export function AiPromptPanel() {
               aria-checked={category === c}
               onClick={() => change(() => (setCategory(c), setTopic('ALL')))}
               className={`min-h-11 min-w-0 rounded-lg border px-0.5 text-[13px] font-semibold sm:text-sm ${
-                category === c ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-800 hover:bg-royal-50'
+                category === c ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:bg-brand-50'
               }`}
             >
               {CATEGORY_FILTER_LABEL[c]}
@@ -77,7 +76,7 @@ export function AiPromptPanel() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-navy-900">
+          <span className="mb-1.5 block text-sm font-semibold text-brand-ink">
             Jumlah{category === 'MIX' ? ' per kategori' : ''}
           </span>
           <select
@@ -94,7 +93,7 @@ export function AiPromptPanel() {
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-navy-900">Kesulitan</span>
+          <span className="mb-1.5 block text-sm font-semibold text-brand-ink">Kesulitan</span>
           <select
             className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3"
             aria-label="Kesulitan soal untuk AI"
@@ -108,7 +107,7 @@ export function AiPromptPanel() {
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-navy-900">Topik</span>
+          <span className="mb-1.5 block text-sm font-semibold text-brand-ink">Topik</span>
           <select
             className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 disabled:bg-slate-50 disabled:text-slate-400"
             aria-label="Topik soal untuk AI"
@@ -145,7 +144,7 @@ export function AiPromptPanel() {
       </div>
 
       <details ref={previewRef} className="rounded-lg ring-1 ring-slate-200">
-        <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold text-navy-800">Lihat prompt</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold text-brand-ink">Lihat prompt</summary>
         <textarea
           ref={textRef}
           readOnly
