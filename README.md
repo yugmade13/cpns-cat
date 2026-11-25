@@ -109,8 +109,11 @@ $env:SITE_URL="https://domainmu.com"; npm run build               # PowerShell
 SITE_URL=https://username.github.io/nama-repo npm run build       # GitHub Pages
 ```
 
-Di Vercel/Netlify, tambahkan `SITE_URL` sebagai *Environment Variable* di pengaturan proyek. Tanpa `SITE_URL`, build
-tetap berhasil tetapi menampilkan peringatan dan pratinjau gambar kemungkinan tidak muncul.
+**Di Vercel tidak perlu mengatur apa pun:** bila `SITE_URL` kosong, build memakai domain produksi yang disediakan
+Vercel (`VERCEL_PROJECT_PRODUCTION_URL`, cadangannya `VERCEL_URL`). Log build menampilkan baris
+`[open-graph] og:image → https://…/og-image.png` sebagai tanda alamatnya sudah terisi. Isi `SITE_URL` hanya bila memakai
+domain sendiri. Di hosting lain (Netlify, GitHub Pages), isi `SITE_URL` sebagai *Environment Variable*. Tanpa alamat
+apa pun, build tetap berhasil tetapi menampilkan peringatan dan pratinjau gambar kemungkinan tidak muncul.
 
 Teks pratinjau ada di bagian `og:`/`twitter:` pada [index.html](index.html). Desain gambarnya ada di
 [design/og-image.html](design/og-image.html) beserta cara membuat ulang PNG-nya. Setelah deploy, cek hasilnya di
