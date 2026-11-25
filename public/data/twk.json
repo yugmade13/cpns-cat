@@ -1,0 +1,142 @@
+[
+  {
+    "id": "twk-001",
+    "category": "TWK",
+    "topic": "Pancasila",
+    "difficulty": "easy",
+    "question": "Rumusan sila keempat Pancasila sebagaimana tercantum dalam Pembukaan UUD NRI Tahun 1945 adalah ….",
+    "options": [
+      { "id": "A", "text": "Ketuhanan Yang Maha Esa" },
+      { "id": "B", "text": "Kemanusiaan yang adil dan beradab" },
+      { "id": "C", "text": "Kerakyatan yang dipimpin oleh hikmat kebijaksanaan dalam permusyawaratan/perwakilan" },
+      { "id": "D", "text": "Persatuan Indonesia" },
+      { "id": "E", "text": "Keadilan sosial bagi seluruh rakyat Indonesia" }
+    ],
+    "correctAnswer": "C",
+    "explanation": "Sila keempat berbunyi \"Kerakyatan yang dipimpin oleh hikmat kebijaksanaan dalam permusyawaratan/perwakilan\". Sila ini menjadi dasar demokrasi Pancasila: keputusan bersama diutamakan melalui musyawarah untuk mufakat, dan kedaulatan rakyat dijalankan melalui lembaga perwakilan.",
+    "reference": "Rumusan resmi Pancasila tercantum dalam alinea keempat Pembukaan UUD NRI Tahun 1945.",
+    "optionNotes": {
+      "A": "Ini rumusan sila pertama.",
+      "B": "Ini rumusan sila kedua.",
+      "D": "Ini rumusan sila ketiga.",
+      "E": "Ini rumusan sila kelima."
+    },
+    "solutionSteps": [],
+    "shortcut": "",
+    "timeTip": "",
+    "tags": ["sila", "pembukaan uud 1945"],
+    "shuffleOptions": true
+  },
+  {
+    "id": "twk-002",
+    "category": "TWK",
+    "topic": "UUD 1945",
+    "difficulty": "medium",
+    "question": "Setelah perubahan UUD 1945, Pasal 1 ayat (2) berbunyi: \"Kedaulatan berada di tangan rakyat dan ….\"",
+    "options": [
+      { "id": "A", "text": "dilaksanakan menurut Undang-Undang Dasar" },
+      { "id": "B", "text": "dilakukan sepenuhnya oleh Majelis Permusyawaratan Rakyat" },
+      { "id": "C", "text": "dilaksanakan oleh Presiden sebagai kepala negara" },
+      { "id": "D", "text": "dijalankan oleh Dewan Perwakilan Rakyat sebagai wakil rakyat" },
+      { "id": "E", "text": "dilaksanakan melalui pemilihan umum setiap lima tahun" }
+    ],
+    "correctAnswer": "A",
+    "explanation": "Melalui Perubahan Ketiga UUD 1945 (tahun 2001), Pasal 1 ayat (2) diubah menjadi \"Kedaulatan berada di tangan rakyat dan dilaksanakan menurut Undang-Undang Dasar\". Artinya, kedaulatan rakyat tidak lagi dipegang satu lembaga tertinggi, tetapi dijalankan oleh berbagai lembaga negara sesuai kewenangan yang diatur UUD.",
+    "reference": "Pasal 1 ayat (2) UUD NRI Tahun 1945 hasil Perubahan Ketiga (2001). Rumusan sebelum perubahan: \"Kedaulatan adalah di tangan rakyat, dan dilakukan sepenuhnya oleh Majelis Permusyawaratan Rakyat.\"",
+    "optionNotes": {
+      "B": "Ini rumusan sebelum perubahan. Sejak Perubahan Ketiga, MPR tidak lagi menjadi pelaksana tunggal kedaulatan rakyat.",
+      "C": "Presiden hanya salah satu lembaga yang menjalankan kewenangan menurut UUD, bukan pelaksana seluruh kedaulatan.",
+      "D": "DPR memang lembaga perwakilan, tetapi pasal ini tidak menyerahkan kedaulatan kepada DPR.",
+      "E": "Pemilu lima tahunan diatur di Pasal 22E, bukan bunyi Pasal 1 ayat (2)."
+    },
+    "solutionSteps": [],
+    "shortcut": "",
+    "timeTip": "",
+    "tags": ["kedaulatan rakyat", "amandemen"],
+    "shuffleOptions": true
+  },
+  {
+    "id": "twk-003",
+    "category": "TWK",
+    "topic": "Sejarah Indonesia",
+    "difficulty": "hard",
+    "question": "Salah satu keputusan sidang pertama Panitia Persiapan Kemerdekaan Indonesia (PPKI) pada 18 Agustus 1945 adalah ….",
+    "options": [
+      { "id": "A", "text": "Menetapkan pembagian wilayah Indonesia menjadi delapan provinsi" },
+      { "id": "B", "text": "Membentuk Badan Keamanan Rakyat (BKR)" },
+      { "id": "C", "text": "Merumuskan naskah Piagam Jakarta" },
+      { "id": "D", "text": "Membacakan teks Proklamasi Kemerdekaan Indonesia" },
+      { "id": "E", "text": "Memilih Ir. Soekarno dan Drs. Mohammad Hatta sebagai Presiden dan Wakil Presiden" }
+    ],
+    "correctAnswer": "E",
+    "explanation": "Sidang PPKI 18 Agustus 1945 menghasilkan tiga keputusan: (1) mengesahkan Undang-Undang Dasar (UUD 1945), (2) memilih Ir. Soekarno sebagai Presiden dan Drs. Mohammad Hatta sebagai Wakil Presiden, dan (3) menetapkan bahwa untuk sementara Presiden dibantu oleh sebuah Komite Nasional. Kunci untuk soal seperti ini adalah menghafal urutan tanggal sidang PPKI: 18, 19, dan 22 Agustus 1945.",
+    "reference": "Sidang PPKI: 18 Agustus 1945 (UUD, Presiden-Wakil Presiden, Komite Nasional); 19 Agustus 1945 (8 provinsi dan 12 kementerian); 22 Agustus 1945 (KNI, PNI, BKR).",
+    "optionNotes": {
+      "A": "Pembagian delapan provinsi diputuskan pada sidang PPKI 19 Agustus 1945, bukan 18 Agustus.",
+      "B": "Pembentukan BKR diputuskan pada sidang PPKI 22 Agustus 1945.",
+      "C": "Piagam Jakarta dirumuskan oleh Panitia Sembilan pada 22 Juni 1945, sebelum PPKI bersidang.",
+      "D": "Proklamasi dibacakan Soekarno didampingi Hatta pada 17 Agustus 1945; itu bukan keputusan sidang PPKI."
+    },
+    "solutionSteps": [],
+    "shortcut": "",
+    "timeTip": "",
+    "tags": ["ppki", "kemerdekaan"],
+    "shuffleOptions": true
+  },
+  {
+    "id": "twk-004",
+    "category": "TWK",
+    "topic": "Bhinneka Tunggal Ika",
+    "difficulty": "easy",
+    "question": "Semboyan \"Bhinneka Tunggal Ika\" yang tertulis pada lambang negara dikutip dari kitab ….",
+    "options": [
+      { "id": "A", "text": "Negarakertagama karya Mpu Prapanca" },
+      { "id": "B", "text": "Sutasoma karya Mpu Tantular" },
+      { "id": "C", "text": "Arjunawiwaha karya Mpu Kanwa" },
+      { "id": "D", "text": "Bharatayuddha karya Mpu Sedah dan Mpu Panuluh" },
+      { "id": "E", "text": "Pararaton yang tidak diketahui penulisnya" }
+    ],
+    "correctAnswer": "B",
+    "explanation": "Ungkapan \"Bhinneka tunggal ika tan hana dharma mangrwa\" berasal dari kitab Sutasoma karya Mpu Tantular pada masa Majapahit. Maknanya \"berbeda-beda tetapi tetap satu, tidak ada kebenaran yang mendua\". Semboyan ini kini menjadi bagian lambang negara Garuda Pancasila dan menegaskan bahwa keberagaman suku, agama, bahasa, dan budaya diikat dalam satu bangsa.",
+    "reference": "Pasal 36A UUD NRI Tahun 1945: \"Lambang Negara ialah Garuda Pancasila dengan semboyan Bhinneka Tunggal Ika.\"",
+    "optionNotes": {
+      "A": "Negarakertagama karya Mpu Prapanca berisi gambaran Kerajaan Majapahit, bukan sumber semboyan ini.",
+      "C": "Arjunawiwaha karya Mpu Kanwa berasal dari masa Airlangga dan tidak memuat semboyan ini.",
+      "D": "Bharatayuddha karya Mpu Sedah dan Mpu Panuluh berasal dari masa Kediri, bukan sumber semboyan ini.",
+      "E": "Pararaton adalah kitab sejarah raja-raja Singasari dan Majapahit, bukan sumber semboyan ini."
+    },
+    "solutionSteps": [],
+    "shortcut": "",
+    "timeTip": "",
+    "tags": ["lambang negara", "majapahit"],
+    "shuffleOptions": true
+  },
+  {
+    "id": "twk-005",
+    "category": "TWK",
+    "topic": "Peran dan kedudukan ASN",
+    "difficulty": "medium",
+    "question": "Dalam nilai dasar ASN \"BerAKHLAK\", nilai yang dimaknai sebagai \"saling peduli dan menghargai perbedaan\", dengan perilaku seperti menghargai setiap orang apa pun latar belakangnya dan membangun lingkungan kerja yang kondusif, adalah ….",
+    "options": [
+      { "id": "A", "text": "Loyal" },
+      { "id": "B", "text": "Kolaboratif" },
+      { "id": "C", "text": "Akuntabel" },
+      { "id": "D", "text": "Harmonis" },
+      { "id": "E", "text": "Adaptif" }
+    ],
+    "correctAnswer": "D",
+    "explanation": "BerAKHLAK adalah singkatan dari Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, dan Kolaboratif. Nilai Harmonis dimaknai \"saling peduli dan menghargai perbedaan\". Perilakunya antara lain menghargai setiap orang apa pun latar belakangnya, suka menolong orang lain, dan membangun lingkungan kerja yang kondusif. Nilai ini sejalan dengan peran ASN sebagai perekat dan pemersatu bangsa.",
+    "reference": "Nilai dasar ASN BerAKHLAK diperkenalkan melalui Surat Edaran Menteri PANRB Nomor 20 Tahun 2021 dan dimuat dalam Undang-Undang Nomor 20 Tahun 2023 tentang Aparatur Sipil Negara.",
+    "optionNotes": {
+      "A": "Loyal dimaknai \"berdedikasi dan mengutamakan kepentingan bangsa dan negara\".",
+      "B": "Kolaboratif dimaknai \"membangun kerja sama yang sinergis\".",
+      "C": "Akuntabel dimaknai \"bertanggung jawab atas kepercayaan yang diberikan\".",
+      "E": "Adaptif dimaknai \"terus berinovasi dan antusias dalam menggerakkan ataupun menghadapi perubahan\"."
+    },
+    "solutionSteps": [],
+    "shortcut": "",
+    "timeTip": "",
+    "tags": ["berakhlak", "nilai dasar asn"],
+    "shuffleOptions": true
+  }
+]
