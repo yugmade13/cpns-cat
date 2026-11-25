@@ -1,11 +1,83 @@
 import { useCallback, useState } from 'react';
 import type { Bank } from '../hooks/useBank';
-import { describeCounts } from '../lib/bankFiles';
+import { describeCounts, displayName, type BankFile } from '../lib/bankFiles';
 import { AiPromptPanel } from './AiPromptPanel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { UploadPanel } from './UploadPanel';
 
-type Pending = { name: string } | null;
+type Pending = { name: string; label: string } | null;
+
+/** Satu baris set soal: nama (bisa diganti), jumlah soal, tombol Ganti nama & Hapus. */
+function FileRow({ file, onRename, onDelete }: { file: BankFile; onRename: (label: string) => void; onDelete: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const name = displayName(file);
+
+  if (editing) {
+    return (
+      <li className="p-3">
+        <form
+          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onRename(draft);
+            setEditing(false);
+          }}
+        >
+          <label className="sr-only" htmlFor={`rename-${file.name}`}>
+            Nama baru untuk {name}
+          </label>
+          <input
+            id={`rename-${file.name}`}
+            className="min-h-10 flex-1 rounded-lg border border-slate-300 px-3 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+            value={draft}
+            maxLength={80}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setEditing(false);
+            }}
+            placeholder={file.name.replace(/.json$/i, '')}
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary min-h-10 flex-1 px-4 text-sm sm:flex-none">
+              Simpan
+            </button>
+            <button type="button" className="btn-secondary min-h-10 flex-1 px-4 text-sm sm:flex-none" onClick={() => setEditing(false)}>
+              Batal
+            </button>
+          </div>
+        </form>
+        <p className="mt-1 text-xs text-slate-500">Kosongkan untuk kembali ke nama file asli.</p>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1 p-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-slate-800 wrap-break-word">{name}</p>
+        <p className="text-sm text-slate-600">
+          {file.questions.length} soal · {describeCounts(file.questions)}
+        </p>
+      </div>
+      <button
+        type="button"
+        className="btn-ghost px-2"
+        onClick={() => {
+          setDraft(name);
+          setEditing(true);
+        }}
+        aria-label={`Ganti nama ${name}`}
+      >
+        Ganti nama
+      </button>
+      <button type="button" className="btn-ghost px-2 text-red-700 hover:bg-red-50" onClick={onDelete} aria-label={`Hapus ${name}`}>
+        Hapus
+      </button>
+    </li>
+  );
+}
 
 export function BankManager({ bank }: { bank: Bank }) {
   const [pending, setPending] = useState<Pending>(null);
@@ -29,22 +101,12 @@ export function BankManager({ bank }: { bank: Bank }) {
       <div className="space-y-4 border-t border-slate-200 p-4 text-[15px]">
         <ul className="divide-y divide-slate-200 rounded-lg ring-1 ring-slate-200" aria-label="File soal tersimpan">
           {bank.files.map((f) => (
-            <li key={f.name} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3">
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-800 wrap-break-word">{f.name}</p>
-                <p className="text-sm text-slate-600">
-                  {f.questions.length} soal · {describeCounts(f.questions)}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-ghost text-red-700 hover:bg-red-50"
-                onClick={() => setPending({ name: f.name })}
-                aria-label={`Hapus file ${f.name}`}
-              >
-                Hapus
-              </button>
-            </li>
+            <FileRow
+              key={f.name}
+              file={f}
+              onRename={(label) => void bank.renameFile(f.name, label)}
+              onDelete={() => setPending({ name: f.name, label: displayName(f) })}
+            />
           ))}
         </ul>
 
@@ -64,7 +126,7 @@ export function BankManager({ bank }: { bank: Bank }) {
             </span>
           </summary>
           <div className="border-t border-slate-200 p-3">
-            <AiPromptPanel />
+            <AiPromptPanel onPromptCopied={bank.rememberPrompt} />
           </div>
         </details>
 
@@ -75,8 +137,8 @@ export function BankManager({ bank }: { bank: Bank }) {
 
       <ConfirmDialog
         open={pending !== null}
-        title="Hapus file soal?"
-        message={`Soal dari file ${pending?.name ?? ''} akan dihapus dari browser ini.${
+        title="Hapus set soal?"
+        message={`Set soal "${pending?.label ?? ''}" akan dihapus dari browser ini.${
           bank.files.length === 1 ? ' Ini file terakhir, jadi kamu perlu mengunggah soal lagi untuk berlatih.' : ''
         }`}
         confirmLabel="Hapus"

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Bank } from '../hooks/useBank';
 import type { StoredIds } from '../hooks/useStoredIds';
-import { describeCounts } from '../lib/bankFiles';
+import { describeCounts, displayName } from '../lib/bankFiles';
 import { suggestedTimer } from '../lib/sessionTimer';
 import { TIMER_OPTIONS, type Question, type SessionMode, type TimerSetting } from '../types';
 import { BankManager } from './BankManager';
@@ -43,8 +43,8 @@ function buildChoices(bank: Bank, stored: StoredIds): Choice[] {
     for (const f of bank.files) {
       choices.push({
         key: `file:${f.name}`,
-        label: f.name.replace(/\.json$/i, ''),
-        title: f.name.replace(/\.json$/i, ''),
+        label: displayName(f),
+        title: displayName(f),
         questions: f.questions,
       });
     }

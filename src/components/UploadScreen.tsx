@@ -38,7 +38,7 @@ export function UploadScreen({ bank }: { bank: Bank }) {
           </span>
         </summary>
         <div className="border-t border-slate-200 p-4">
-          <AiPromptPanel />
+          <AiPromptPanel onPromptCopied={bank.rememberPrompt} />
         </div>
       </details>
     </div>

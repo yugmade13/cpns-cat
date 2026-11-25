@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -7,9 +8,40 @@ import tailwindcss from '@tailwindcss/vite';
 // Default "./" (relatif) sehingga build bisa dibuka dari sub-folder mana pun.
 const base = process.env.BASE_PATH ?? './';
 
+// SITE_URL = alamat lengkap situs setelah di-deploy, dipakai untuk Open Graph (pratinjau tautan).
+// Sebagian besar platform (WhatsApp, Facebook, LinkedIn, X) hanya membaca og:image dengan URL absolut.
+//   SITE_URL=https://domainmu.com npm run build
+//   SITE_URL=https://username.github.io/nama-repo npm run build
+const siteUrl = process.env.SITE_URL;
+
+/** Mengisi %OG_IMAGE% dan <!--OG_URL--> di index.html berdasarkan SITE_URL. */
+function openGraph(rawUrl: string | undefined): Plugin {
+  const url = rawUrl?.trim().replace(/\/+$/, '');
+  if (url && !/^https?:\/\//i.test(url)) {
+    throw new Error(`SITE_URL harus diawali http:// atau https:// (ditemukan: "${rawUrl}").`);
+  }
+  return {
+    name: 'open-graph-url',
+    configResolved(config) {
+      if (!url && config.command === 'build') {
+        config.logger.warn(
+          '\n[open-graph] SITE_URL belum diisi: og:image memakai alamat relatif, sehingga pratinjau tautan ' +
+            'di WhatsApp/Facebook/X mungkin tidak muncul. Contoh: SITE_URL=https://domainmu.com npm run build\n',
+        );
+      }
+    },
+    transformIndexHtml(html) {
+      const image = url ? `${url}/og-image.png` : 'og-image.png';
+      return html
+        .replaceAll('%OG_IMAGE%', image)
+        .replace('<!--OG_URL-->', url ? `<meta property="og:url" content="${url}/" />` : '');
+    },
+  };
+}
+
 export default defineConfig({
   base,
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), openGraph(siteUrl)],
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],

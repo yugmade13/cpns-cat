@@ -1,17 +1,24 @@
 import { useRef, useState } from 'react';
-import { buildAiPrompt, makeIdPrefix } from '../lib/aiPrompt';
+import { buildAiPrompt, makeIdPrefix, splitCount } from '../lib/aiPrompt';
 import { copyText } from '../lib/clipboard';
 import { CATEGORY_FILTER_LABEL } from '../lib/labels';
+import { makeBatchLabel } from '../lib/promptLabels';
 import { SUPPORTED_TOPICS } from '../lib/topics';
 import type { CategoryFilter, Difficulty } from '../types';
 import { AlertIcon, CheckIcon } from './Icons';
 
 const CATS: CategoryFilter[] = ['TWK', 'TIU', 'TKP', 'MIX'];
+/** Pilihan jumlah soal TOTAL per prompt (untuk Campuran dibagi seimbang ke TWK/TIU/TKP). */
 const COUNTS = [5, 10, 15] as const;
 
 const newPrefix = () => `${makeIdPrefix()}${Math.random().toString(36).slice(2, 4)}`;
 
-export function AiPromptPanel() {
+interface Props {
+  /** Dipanggil saat prompt disalin: awalan ID dan nama set yang mudah dibaca, untuk dicatat. */
+  onPromptCopied?: (prefix: string, label: string) => void;
+}
+
+export function AiPromptPanel({ onPromptCopied }: Props = {}) {
   const [category, setCategory] = useState<CategoryFilter>('MIX');
   const [count, setCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<Difficulty | 'ALL'>('ALL');
@@ -23,13 +30,17 @@ export function AiPromptPanel() {
 
   const topicChoices = category === 'MIX' ? [] : SUPPORTED_TOPICS[category];
   const prompt = buildAiPrompt({ category, count, difficulty, topic: category === 'MIX' ? 'ALL' : topic, idPrefix: prefix });
-  const total = count * (category === 'MIX' ? 3 : 1);
+  const total = count;
+  const split = splitCount(category, count);
+  const effectiveTopic = category === 'MIX' ? 'ALL' : topic;
+  const remember = (p: string) => onPromptCopied?.(p, makeBatchLabel({ category, topic: effectiveTopic, difficulty }));
 
   const copy = async () => {
     // Awalan ID baru setiap kali menyalin agar batch berikutnya tidak bentrok ID.
     const p = newPrefix();
     setPrefix(p);
-    const text = buildAiPrompt({ category, count, difficulty, topic: category === 'MIX' ? 'ALL' : topic, idPrefix: p });
+    const text = buildAiPrompt({ category, count, difficulty, topic: effectiveTopic, idPrefix: p });
+    remember(p);
     const ok = await copyText(text);
     setStatus(ok ? 'copied' : 'failed');
     if (!ok && previewRef.current) {
@@ -49,14 +60,18 @@ export function AiPromptPanel() {
         <li>Atur jenis soal di bawah, lalu tekan <strong>Salin Prompt</strong>.</li>
         <li>Tempel prompt ke asisten AI pilihanmu (ChatGPT, Claude, Gemini, dan lainnya).</li>
         <li>
-          Unduh file <strong>.json</strong> yang dibuat AI, lalu unggah di aplikasi ini. Jika AI hanya menampilkan teks JSON,
-          salin teksnya dan simpan sebagai file berakhiran <strong>.json</strong>.
+          Jika AI hanya menampilkan teks JSON, salin teksnya (tombol <em>Copy</em> pada blok kode), buka tab{' '}
+          <strong>Tempel Teks</strong>, lalu tekan <strong>Muat Soal dari Teks</strong>. Jika AI membuatkan file{' '}
+          <strong>.json</strong>, unduh lalu unggah lewat tab <strong>Unggah File</strong>.
+        </li>
+        <li>
+          Soal langsung tersimpan. Pilih mode dan waktu, lalu tekan <strong>Mulai Latihan</strong>.
         </li>
       </ol>
 
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-brand-ink">Kategori</legend>
-        <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Kategori soal AI">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Kategori soal AI">
           {CATS.map((c) => (
             <button
               key={c}
@@ -64,7 +79,7 @@ export function AiPromptPanel() {
               role="radio"
               aria-checked={category === c}
               onClick={() => change(() => (setCategory(c), setTopic('ALL')))}
-              className={`min-h-11 min-w-0 rounded-lg border px-0.5 text-[13px] font-semibold sm:text-sm ${
+              className={`min-h-11 min-w-0 rounded-lg border px-1 text-sm font-semibold ${
                 category === c ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-brand-ink hover:bg-brand-50'
               }`}
             >
@@ -77,7 +92,7 @@ export function AiPromptPanel() {
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-sm font-semibold text-brand-ink">
-            Jumlah{category === 'MIX' ? ' per kategori' : ''}
+            Jumlah soal
           </span>
           <select
             className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3"
@@ -143,6 +158,21 @@ export function AiPromptPanel() {
         </p>
       </div>
 
+      <div className="space-y-1 rounded-lg bg-brand-50 p-3 text-sm text-brand-ink ring-1 ring-brand/20">
+        <p>
+          {category === 'MIX' ? (
+            <>
+              Pembagian seimbang: <strong>{split.map((x) => `${x.category} ${x.count}`).join(' · ')}</strong> (total {total}{' '}
+              soal).
+            </>
+          ) : (
+            <>
+              {total} soal {category}.
+            </>
+          )}
+        </p>
+      </div>
+
       <details ref={previewRef} className="rounded-lg ring-1 ring-slate-200">
         <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold text-brand-ink">Lihat prompt</summary>
         <textarea
@@ -152,14 +182,14 @@ export function AiPromptPanel() {
           aria-label="Isi prompt untuk AI"
           className="block h-72 w-full resize-y border-t border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-800"
           onFocus={(e) => e.currentTarget.select()}
+          onCopy={() => remember(prefix)}
         />
       </details>
 
       <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">
         <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          AI bisa keliru. Periksa ulang fakta TWK (pasal, tahun, tokoh) dan hitungan TIU sebelum dipakai berlatih. Jika
-          jawaban AI terpotong, kurangi jumlah soal lalu salin ulang.
+          AI bisa keliru. Periksa ulang fakta TWK (pasal, tahun, tokoh) dan hitungan TIU sebelum dipakai berlatih.
         </span>
       </p>
     </div>

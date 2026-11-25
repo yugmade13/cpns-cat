@@ -1,0 +1,110 @@
+<!doctype html>
+<!--
+  Sumber desain Open Graph image (1200×630) untuk public/og-image.png.
+  Cara membuat ulang PNG: jalankan `npm install` (agar font Inter tersedia di node_modules), buka file ini di
+  Chrome/Edge, buka DevTools → Toggle device toolbar, set ukuran 1200 × 630, lalu menu ⋮ → "Capture screenshot".
+  Simpan hasilnya sebagai public/og-image.png.
+-->
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      @font-face {
+        font-family: 'Inter';
+        src: url('../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1200px; height: 630px; }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #ffffff;
+        color: #14628c;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Aksen dekoratif */
+      .blob { position: absolute; border-radius: 50%; background: #eaf6fc; }
+      .blob.a { width: 620px; height: 620px; right: -140px; top: -170px; }
+      .blob.b { width: 260px; height: 260px; left: -90px; bottom: -120px; background: #d3ecf8; }
+      .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; background: #269dd8; }
+
+      .left { position: absolute; left: 72px; top: 78px; width: 560px; }
+      .brand { display: flex; align-items: center; gap: 16px; }
+      .logo {
+        width: 64px; height: 64px; border-radius: 16px; background: #269dd8; color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800;
+      }
+      .brand span { font-size: 22px; font-weight: 700; letter-spacing: 0.02em; color: #269dd8; }
+      h1 { margin-top: 34px; font-size: 64px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; color: #14628c; }
+      h1 em { font-style: normal; color: #269dd8; }
+      .sub { margin-top: 22px; font-size: 26px; line-height: 1.4; color: #334155; font-weight: 500; }
+      .chips { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
+      .chip {
+        font-size: 20px; font-weight: 700; padding: 10px 18px; border-radius: 999px;
+        background: #ffffff; color: #14628c; border: 2px solid #d3ecf8;
+      }
+      .chip.solid { background: #269dd8; border-color: #269dd8; color: #fff; }
+
+      /* Cuplikan kartu soal */
+      .card {
+        position: absolute; right: 72px; top: 92px; width: 430px; padding: 26px;
+        background: #fff; border-radius: 24px; border: 2px solid #e2e8f0;
+        box-shadow: 0 24px 60px rgba(20, 98, 140, 0.18);
+      }
+      .card-head { display: flex; align-items: center; justify-content: space-between; }
+      .tag { font-size: 15px; font-weight: 800; color: #fff; background: #269dd8; padding: 5px 12px; border-radius: 999px; }
+      .timer { font-size: 17px; font-weight: 800; color: #14628c; font-variant-numeric: tabular-nums; }
+      .q { margin-top: 16px; font-size: 19px; line-height: 1.4; font-weight: 600; color: #0f172a; }
+      .opts { margin-top: 16px; display: grid; gap: 10px; }
+      .opt {
+        display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px;
+        border: 2px solid #e2e8f0; font-size: 17px; color: #1e293b; font-weight: 500;
+      }
+      .opt b {
+        width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 14px; border: 2px solid #cbd5e1; color: #14628c; flex-shrink: 0;
+      }
+      .opt.ok { border-color: #16a34a; background: #f0fdf4; }
+      .opt.ok b { background: #15803d; border-color: #15803d; color: #fff; }
+      .opt.ok i { margin-left: auto; font-style: normal; font-size: 14px; font-weight: 800; color: #166534; }
+      .tip {
+        margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #eaf6fc;
+        border-left: 5px solid #269dd8; font-size: 15px; color: #14628c; font-weight: 600;
+      }
+      .note { position: absolute; left: 72px; bottom: 44px; font-size: 17px; color: #64748b; font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <div class="blob a"></div>
+    <div class="blob b"></div>
+
+    <div class="left">
+      <div class="brand"><div class="logo">S</div><span>SIMULASI SKD CPNS</span></div>
+      <h1>Simulasi SKD<br />CPNS <em>2027</em></h1>
+      <p class="sub">Latihan TWK, TIU, dan TKP dengan pembahasan lengkap, mode ujian, dan timer.</p>
+      <div class="chips">
+        <span class="chip solid">TWK</span>
+        <span class="chip solid">TIU</span>
+        <span class="chip solid">TKP</span>
+        <span class="chip">Mode Ujian</span>
+        <span class="chip">Buat soal dengan AI</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="tag">TIU · Deret angka</span><span class="timer">⏱ 14:52</span></div>
+      <p class="q">Bilangan berikutnya dari deret 3, 5, 9, 17, 33, … adalah ….</p>
+      <div class="opts">
+        <div class="opt"><b>A</b>49</div>
+        <div class="opt"><b>B</b>57</div>
+        <div class="opt ok"><b>C</b>65<i>✓ Benar</i></div>
+        <div class="opt"><b>D</b>66</div>
+      </div>
+      <div class="tip">⚡ Cara cepat: suku × 2 − 1</div>
+    </div>
+
+    <p class="note">Aplikasi simulasi mandiri · tidak berafiliasi dengan BKN</p>
+    <div class="bar"></div>
+  </body>
+</html>

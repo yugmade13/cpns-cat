@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildAiPrompt, makeIdPrefix } from '../src/lib/aiPrompt';
 import { suggestedTimer } from '../src/lib/sessionTimer';
-import { parseUploadText, prepareImport } from '../src/lib/bankFiles';
+import { parseUploadText, pastedFileName, prepareImport } from '../src/lib/bankFiles';
 import { normalizeRaw } from '../src/lib/loader';
 import { validateQuestion } from '../src/lib/validate';
 import { fixtureBank } from './helpers';
@@ -16,15 +16,20 @@ function examples(prompt: string): unknown[] {
 describe('prompt AI', () => {
   it('Campuran: memuat rencana ketiga kategori, jumlah total, dan pola ID', () => {
     const p = buildAiPrompt({ ...base, category: 'MIX' });
-    expect(p).toContain('Buatkan 30 soal');
-    for (const c of ['twk', 'tiu', 'tkp']) {
-      expect(p).toContain(`"ai2611251432xy-${c}-001" sampai "ai2611251432xy-${c}-010"`);
-    }
+    // count = jumlah TOTAL (10) → dibagi seimbang 4/3/3
+    expect(p).toContain('Buatkan 10 soal');
+    expect(p).toContain('- 4 soal TWK, ID "ai2611251432xy-twk-001" sampai "ai2611251432xy-twk-004"');
+    expect(p).toContain('- 3 soal TIU, ID "ai2611251432xy-tiu-001" sampai "ai2611251432xy-tiu-003"');
+    expect(p).toContain('- 3 soal TKP, ID "ai2611251432xy-tkp-001" sampai "ai2611251432xy-tkp-003"');
     expect(p).toContain('ATURAN TWK');
     expect(p).toContain('ATURAN TIU');
     expect(p).toContain('ATURAN TKP');
-    expect(p).toContain('Buat SATU file yang dapat diunduh bernama "ai2611251432xy.json"');
+    // Satu jawaban (tanpa dibagi), file tunggal bila AI bisa, tanpa instruksi "lanjutkan"
+    expect(p).not.toContain('BAGIAN');
+    expect(p).toContain('buat SATU file bernama "ai2611251432xy.json"');
     expect(p).toContain('SATU blok kode berlabel json (diawali ```json');
+    expect(p.toLowerCase()).not.toContain('lanjutkan');
+    expect(p).toContain('lalu tulis hasilnya sesuai FORMAT KELUARAN');
 
   });
 
@@ -74,6 +79,12 @@ describe('unggah jawaban AI', () => {
     expect(parseUploadText('x', '[{"id": "a", "category": "TWK"').fatal).toMatch(/bukan JSON yang valid/);
     expect(parseUploadText('x', '   ').fatal).toMatch(/kosong/);
   });
+
+  it('nama tempelan memakai awalan ID dari prompt AI', () => {
+    expect(pastedFileName([{ id: 'ai2611251432xy-tiu-001' }])).toBe('ai2611251432xy.json');
+    expect(pastedFileName([{ id: 'soal-01' }], new Date(2026, 10, 25, 9, 5, 7))).toBe('tempelan-20261125-090507.json');
+  });
+
 
   it('menerima JSON yang dibungkus blok kode ```json', () => {
     const json = JSON.stringify(fixtureBank());

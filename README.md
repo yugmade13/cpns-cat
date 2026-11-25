@@ -10,12 +10,22 @@ diunggah oleh pengguna.
 
 1. Buka aplikasi dan **masuk** dengan username & password yang terdaftar (lihat "Mengelola pengguna"). Jika belum
    ada soal, muncul layar **Unggah Bank Soal**.
-2. Unggah file `.json` berisi soal. Satu file boleh berisi TWK, TIU, dan TKP sekaligus, dan beberapa file juga bisa
+2. Unggah file `.json` berisi soal (tab **Unggah File**), atau tempel teks JSON langsung (tab **Tempel Teks**).
+   Satu file boleh berisi TWK, TIU, dan TKP sekaligus, dan beberapa file juga bisa
    diunggah bersamaan. Format lengkap ada di **[PANDUAN_SOAL.md](PANDUAN_SOAL.md)**.
    Belum punya file soal? Buka **Buat Soal dengan AI**, pilih kategori, jumlah, kesulitan, dan topik, lalu tekan
    **Salin Prompt**. Tempel prompt ke asisten AI (ChatGPT, Claude, Gemini, dll.); AI diminta membuat file `.json` yang
-   bisa diunduh, lalu unggah file itu. Jika AI hanya menampilkan teks JSON, simpan teksnya sebagai file `.json`.
-   File yang masih berisi kalimat pembuka AI atau pembungkus blok kode Markdown (`` ```json ``) tetap diterima.
+   bisa diunduh. Jika AI bisa membuat file, unduh lalu unggah. Tidak semua AI bisa membuat file; jika AI hanya
+   menampilkan teks JSON, salin teksnya ke tab **Tempel Teks** lalu tekan **Muat Soal dari Teks**. Kalimat pembuka AI
+   atau pembungkus blok kode Markdown (`` ```json ``) yang ikut tersalin tetap diterima.
+   - **Jumlah soal adalah jumlah total**: pilihan 5 / 10 / 15 (bawaan 5). Untuk Campuran dibagi seimbang ke TWK, TIU,
+     dan TKP (5 → 2/2/1, 10 → 4/3/3, 15 → 5/5/5); pembagiannya tampil di panel AI. AI menulis semua soal dalam satu
+     jawaban berformat **JSON ringkas** (tanpa indentasi & field opsional kosong).
+   - **Jawaban AI terpotong** (lebih mungkin pada 10–15 soal di AI versi gratis): soal yang sudah lengkap tetap dimuat
+     dan ada pemberitahuan. Agar semua soal lengkap, pilih jumlah soal lebih sedikit lalu salin prompt lagi.
+   - Menempel/mengunggah ulang set yang sama (ID sama) **menggantikan** versi lamanya setelah konfirmasi.
+   - **Nama set** otomatis dibentuk dari pilihan prompt (mis. "TIU · Deret angka · Sulit · 25 Nov 19.00") dan bisa
+     diganti lewat **Ganti nama** di Kelola Bank Soal.
 3. Soal tersimpan di browser itu (IndexedDB), jadi tidak perlu diunggah ulang saat aplikasi dibuka lagi.
 4. Pilih **Mode** dan **Waktu**, lalu tekan **Mulai Latihan** / **Mulai Ujian**. Semua soal yang diunggah langsung
    dipakai (diacak); tidak perlu memilih kategori, topik, tingkat kesulitan, atau jumlah soal, karena isi sesi sudah
@@ -86,6 +96,26 @@ sehingga hasil build bisa dibuka dari domain utama maupun sub-folder.
   ```
 
 Aplikasi tidak memakai routing URL, jadi tidak perlu aturan *rewrite* atau halaman 404 khusus.
+
+### Pratinjau tautan (Open Graph)
+
+Saat tautan aplikasi dibagikan di WhatsApp, Telegram, Facebook, LinkedIn, atau X, yang tampil adalah judul, deskripsi,
+dan gambar [public/og-image.png](public/og-image.png) (1200×630). Kebanyakan platform hanya membaca gambar dengan
+**alamat lengkap**, jadi isi `SITE_URL` dengan alamat situs setelah di-deploy:
+
+```bash
+SITE_URL=https://domainmu.com npm run build                       # Git Bash / macOS / Linux
+$env:SITE_URL="https://domainmu.com"; npm run build               # PowerShell
+SITE_URL=https://username.github.io/nama-repo npm run build       # GitHub Pages
+```
+
+Di Vercel/Netlify, tambahkan `SITE_URL` sebagai *Environment Variable* di pengaturan proyek. Tanpa `SITE_URL`, build
+tetap berhasil tetapi menampilkan peringatan dan pratinjau gambar kemungkinan tidak muncul.
+
+Teks pratinjau ada di bagian `og:`/`twitter:` pada [index.html](index.html). Desain gambarnya ada di
+[design/og-image.html](design/og-image.html) beserta cara membuat ulang PNG-nya. Setelah deploy, cek hasilnya di
+[opengraph.xyz](https://www.opengraph.xyz/) atau Facebook Sharing Debugger; platform menyimpan pratinjau dalam cache,
+jadi perubahan bisa butuh waktu untuk terlihat.
 
 ## Mengelola pengguna (login)
 

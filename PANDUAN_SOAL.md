@@ -1,8 +1,13 @@
 # Panduan Penulisan Soal — Simulasi SKD CPNS 2027
 
 Dokumen ini adalah acuan untuk menulis file soal (`.json`) yang diunggah ke aplikasi.
-Aplikasi **tidak membawa soal bawaan**: pengguna mengunggah file soal lewat layar "Unggah Bank Soal" atau menu
-"Kelola Bank Soal". Prompt AI meminta AI membuat file bernama sesuai awalan ID (mis. `ai2611251432xy.json`). Soal disimpan di browser pengguna (IndexedDB) sehingga cukup diunggah sekali per browser.
+Aplikasi **tidak membawa soal bawaan**: pengguna mengunggah file soal (tab "Unggah File") atau menempel teks JSON
+(tab "Tempel Teks") lewat layar "Unggah Bank Soal" atau menu "Kelola Bank Soal". Prompt AI meminta AI membuat file
+bernama sesuai awalan ID (mis. `ai2611251432xy.json`); teks tempelan disimpan dengan nama yang sama. Menempel ulang
+set yang sama (ID sama) menggantikan versi lamanya. Soal hasil prompt aplikasi (ID berawalan `ai…`) dengan awalan yang
+sama dan ID baru digabung ke set yang sama walaupun dimuat terpisah. Field opsional yang kosong atau bernilai bawaan
+(`tags`, `shuffleOptions: true`, `solutionSteps`/`shortcut`/`timeTip` kosong) boleh tidak ditulis. JSON yang terpotong tetap diterima:
+soal yang sudah lengkap dimuat, sisanya diabaikan. Soal disimpan di browser pengguna (IndexedDB) sehingga cukup diunggah sekali per browser.
 
 - Satu file boleh berisi soal **TWK, TIU, dan TKP sekaligus**. Kategori ditentukan oleh field `category` tiap soal,
   bukan oleh nama file.

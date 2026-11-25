@@ -5,7 +5,7 @@ import { SUPPORTED_TOPICS, TIU_TOPIC_SUBTYPE } from './topics';
 
 export interface AiPromptOptions {
   category: CategoryFilter;
-  /** Jumlah soal per kategori. */
+  /** Jumlah soal TOTAL. Untuk Campuran dibagi seimbang ke TWK, TIU, dan TKP (lihat splitCount). */
   count: number;
   difficulty: Difficulty | 'ALL';
   /** Topik tertentu, atau 'ALL' untuk sebaran topik dari daftar. */
@@ -44,9 +44,7 @@ const CHOICE_EXAMPLE = (prefix: string) => `{
   "subtype": "numerik",
   "solutionSteps": ["Langkah 1 …", "Langkah 2 …"],
   "shortcut": "Trik cepat saat ujian.",
-  "timeTip": "Satu kalimat tips hemat waktu.",
-  "tags": ["kata kunci"],
-  "shuffleOptions": true
+  "timeTip": "Satu kalimat tips hemat waktu."
 }`;
 
 const TKP_EXAMPLE = (prefix: string) => `{
@@ -66,9 +64,7 @@ const TKP_EXAMPLE = (prefix: string) => `{
   "competency": "Kompetensi yang diuji",
   "principle": "Prinsip perilaku yang mendasari",
   "whyBest": "Mengapa opsi terbaik paling tepat.",
-  "lesson": "Pelajaran untuk dunia kerja",
-  "tags": [],
-  "shuffleOptions": true
+  "lesson": "Pelajaran untuk dunia kerja"
 }`;
 
 function categoryRules(cat: Category): string {
@@ -100,21 +96,47 @@ ${groups}
 - Opsi terbaik TIDAK boleh selalu yang paling panjang atau paling sopan bunyinya; skor ditentukan oleh kualitas tindakan. Sertakan opsi yang terdengar ramah tetapi melanggar aturan (skor rendah).`;
 }
 
+/**
+ * Membagi jumlah soal total ke kategori secara seimbang; sisa pembagian diberikan berurutan ke TWK, TIU, lalu TKP.
+ * Contoh Campuran: 5 → 2/2/1, 10 → 4/3/3, 15 → 5/5/5.
+ */
+export function splitCount(category: CategoryFilter, total: number): { category: Category; count: number }[] {
+  const cats: Category[] = category === 'MIX' ? ['TWK', 'TIU', 'TKP'] : [category];
+  const base = Math.floor(total / cats.length);
+  const rest = total % cats.length;
+  return cats.map((c, i) => ({ category: c, count: base + (i < rest ? 1 : 0) })).filter((x) => x.count > 0);
+}
+
+/** Instruksi format keluaran: semua soal dalam satu jawaban berisi JSON ringkas. */
+function outputFormat(prefix: string): string {
+  const compact = `- Tulis JSON RINGKAS: satu soal per baris, tanpa indentasi, dan JANGAN tulis field opsional yang kosong atau bernilai bawaan (lewati "tags" kosong, "shuffleOptions": true, "solutionSteps"/"shortcut"/"timeTip" yang kosong, "reference" untuk TIU/TKP, "subtype" untuk TWK/TKP). Isi pembahasan tetap lengkap.
+- Jangan menulis komentar di dalam JSON. Gunakan tanda kutip ganda yang benar, tanpa koma di akhir elemen terakhir. Baris baru di dalam teks ditulis sebagai "\\n".
+- Kategori ditentukan oleh field "category"; soal TWK, TIU, dan TKP boleh berada dalam array yang sama.`;
+
+  return `FORMAT KELUARAN (WAJIB)
+- Jika kamu bisa membuat file yang dapat diunduh, buat SATU file bernama "${prefix}.json" berisi semua soal sebagai satu array JSON.
+- Jika tidak bisa membuat file, langsung tulis array JSON itu di dalam SATU blok kode berlabel json (diawali ${FENCE}json dan diakhiri ${FENCE}), tanpa permintaan maaf atau penjelasan tambahan.
+${compact}`;
+}
+
 export function buildAiPrompt(o: AiPromptOptions): string {
-  const cats: Category[] = o.category === 'MIX' ? ['TWK', 'TIU', 'TKP'] : [o.category];
-  const total = o.count * cats.length;
+  const split = splitCount(o.category, o.count);
+  const cats: Category[] = split.map((x) => x.category);
+  const total = o.count;
   const diff =
     o.difficulty === 'ALL'
       ? 'campuran mudah (easy), sedang (medium), dan sulit (hard) dengan porsi seimbang'
       : `semuanya ${DIFF_TEXT[o.difficulty]}`;
 
-  const plan = cats
-    .map((c) => {
+  const plan = split
+    .map(({ category: c, count: n }) => {
       const topics =
         o.topic !== 'ALL' && o.category !== 'MIX'
           ? `semua bertopik "${o.topic}"`
-          : `topik disebar dari daftar berikut (minimal 2 topik berbeda, nama topik ditulis persis): ${SUPPORTED_TOPICS[c].join('; ')}`;
-      return `- ${o.count} soal ${c}, ID "${o.idPrefix}-${c.toLowerCase()}-001" sampai "${o.idPrefix}-${c.toLowerCase()}-${String(o.count).padStart(3, '0')}"; ${topics}.`;
+          : `topik ${n >= 2 ? 'disebar dari daftar berikut (minimal 2 topik berbeda' : 'dipilih dari daftar berikut ('}, nama topik ditulis persis): ${SUPPORTED_TOPICS[c].join('; ')}`;
+      const first = `${o.idPrefix}-${c.toLowerCase()}-001`;
+      const ids = n === 1 ? `ID "${first}"` : `ID "${first}" sampai "${o.idPrefix}-${c.toLowerCase()}-${String(n).padStart(3, '0')}"`;
+      return `- ${n} soal ${c}, ${ids}; ${topics}.`;
     })
     .join('\n');
 
@@ -130,12 +152,9 @@ RENCANA SOAL
 ${plan}
 - Tingkat kesulitan: ${diff}.
 
-FORMAT KELUARAN (WAJIB)
-- Buat SATU file yang dapat diunduh bernama "${o.idPrefix}.json" berisi SEMUA soal sebagai satu array JSON yang valid. File ini akan langsung diunggah ke aplikasi.
-- Jika kamu tidak bisa membuat file, tulis array JSON itu di dalam SATU blok kode berlabel json (diawali ${FENCE}json dan diakhiri ${FENCE}) agar pengguna bisa menyalin dan menyimpannya sebagai file "${o.idPrefix}.json". Jangan memecahnya ke beberapa blok kode.
-- Jangan menulis komentar di dalam JSON. Di luar blok kode, cukup satu kalimat singkat atau tidak sama sekali.
-- Gunakan tanda kutip ganda yang benar, tanpa koma di akhir elemen terakhir. Baris baru di dalam teks ditulis sebagai "\\n".
-- Semua soal ada di satu array; kategori ditentukan oleh field "category".
+${outputFormat(o.idPrefix)}
+
+(Contoh berikut ditulis berindentasi agar mudah dibaca; keluaranmu tetap JSON ringkas.)
 
 ${examples}
 
@@ -145,7 +164,7 @@ ATURAN UMUM (soal yang melanggar akan ditolak aplikasi)
 - Tepat 5 opsi dengan "id" "A", "B", "C", "D", "E" berurutan; teks tidak boleh kosong dan tidak boleh ada dua opsi dengan teks sama.
 - TWK/TIU: "correctAnswer" salah satu dari "A"–"E"; "explanation" wajib; isi "optionNotes" untuk keempat opsi yang salah.
 - Sebarkan huruf jawaban benar TWK/TIU secara merata di A–E (tidak ada huruf yang mendominasi).
-- Opsi akan diacak oleh aplikasi. Jika teks soal atau opsi merujuk ke opsi lain (mis. "A dan B benar", "semua jawaban di atas benar", "tidak ada jawaban yang benar"), set "shuffleOptions": false. Selain itu set "shuffleOptions": true. Sebaiknya hindari opsi seperti itu.
+- Opsi akan diacak oleh aplikasi. Jika teks soal atau opsi merujuk ke opsi lain (mis. "A dan B benar", "semua jawaban di atas benar", "tidak ada jawaban yang benar"), tulis "shuffleOptions": false. Selain itu jangan tulis field "shuffleOptions" (bawaannya true). Sebaiknya hindari opsi seperti itu.
 - Di pembahasan, jika perlu menyebut huruf opsi, tulis dengan pola "opsi X" (mis. "opsi C"), bukan "(C)" atau "huruf C".
 
 ${cats.map(categoryRules).join('\n\n')}

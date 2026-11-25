@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  aiPrefixOf,
   applyImport,
   MAX_UPLOAD_BYTES,
   parseUploadText,
+  pastedFileName,
   prepareImport,
   type BankFile,
   type ParsedUpload,
@@ -10,6 +12,7 @@ import {
 } from '../lib/bankFiles';
 import { deleteStoredFile, loadStoredFiles, saveFiles } from '../lib/bankStore';
 import { logRejected, parseQuestions } from '../lib/loader';
+import { readPromptLabels, rememberPromptLabel } from '../lib/promptLabels';
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -23,7 +26,13 @@ function revalidate(stored: unknown[]): BankFile[] {
     logRejected(r.rejected);
     r.questions.forEach((q) => ids.add(q.id));
     if (r.questions.length > 0) {
-      files.push({ name: raw.name, uploadedAt: typeof raw.uploadedAt === 'number' ? raw.uploadedAt : 0, questions: r.questions });
+      const label = typeof raw.label === 'string' && raw.label.trim() ? raw.label.trim() : undefined;
+      files.push({
+        name: raw.name,
+        ...(label ? { label } : {}),
+        uploadedAt: typeof raw.uploadedAt === 'number' ? raw.uploadedAt : 0,
+        questions: r.questions,
+      });
     }
   }
   return files.sort((a, b) => a.uploadedAt - b.uploadedAt || a.name.localeCompare(b.name));
@@ -61,11 +70,18 @@ export function useBank(owner: string) {
 
   const all = useMemo(() => files.flatMap((f) => f.questions), [files]);
 
-  const prepareUploads = (uploads: ParsedUpload[]): PreparedFile[] => {
-    const prepared = prepareImport(filesRef.current, uploads);
-    prepared.forEach((p) => logRejected(p.rejected));
-    return prepared;
-  };
+  const prepareUploads = useCallback(
+    (uploads: ParsedUpload[]): PreparedFile[] => {
+      const labels = readPromptLabels(owner);
+      return prepareImport(filesRef.current, uploads).map((p) => {
+        logRejected(p.rejected);
+        // Beri nama yang mudah dibaca bila soal berasal dari prompt AI yang tercatat.
+        const prefix = aiPrefixOf(p.questions.map((q) => q.id));
+        return prefix && labels[prefix] ? { ...p, label: labels[prefix] } : p;
+      });
+    },
+    [owner],
+  );
 
   /** Membaca & memvalidasi file pilihan pengguna tanpa mengubah bank. */
   const prepare = useCallback(async (list: File[]): Promise<PreparedFile[]> => {
@@ -80,7 +96,41 @@ export function useBank(owner: string) {
       }),
     );
     return prepareUploads(uploads);
-  }, []);
+  }, [prepareUploads]);
+
+  /**
+   * Sama seperti prepare, untuk teks JSON yang ditempel langsung (mis. jawaban AI).
+   * Lanjutan jawaban AI (awalan ID sama, ID baru) ditambahkan ke set yang sudah ada.
+   */
+  const prepareText = useCallback(
+    (text: string): PreparedFile[] => {
+      const parsed = parseUploadText('teks tempelan', text);
+      const name = parsed.fatal ? 'Teks tempelan' : pastedFileName(parsed.data);
+      return prepareUploads([{ ...parsed, name, appendIfNew: true }]);
+    },
+    [prepareUploads],
+  );
+
+  /** Mencatat nama set untuk awalan ID prompt AI yang baru disalin. */
+  const rememberPrompt = useCallback((prefix: string, label: string) => rememberPromptLabel(owner, prefix, label), [owner]);
+
+  /** Mengganti nama tampilan sebuah set soal (kosong = kembali ke nama file). */
+  const renameFile = useCallback(
+    async (name: string, label: string) => {
+      const clean = label.trim().slice(0, 80);
+      const next = filesRef.current.map((f) => {
+        if (f.name !== name) return f;
+        const { label: _old, ...rest } = f;
+        return clean ? { ...rest, label: clean } : rest;
+      });
+      filesRef.current = next;
+      setFiles(next);
+      const changed = next.find((f) => f.name === name);
+      if (persistent && changed) await saveFiles(owner, [changed]).catch(() => setSaveError(SAVE_ERROR));
+    },
+    [persistent, owner],
+  );
+
 
   /** Menerapkan hasil persiapan ke bank dan menyimpannya di browser. */
   const commit = useCallback(
@@ -124,6 +174,9 @@ export function useBank(owner: string) {
     saveError,
     report,
     prepare,
+    prepareText,
+    rememberPrompt,
+    renameFile,
     commit,
     cancelImport,
     dismissReport,
