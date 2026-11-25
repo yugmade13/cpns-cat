@@ -58,3 +58,8 @@ export const LogoutIcon = ({ className }: IconProps) => (
     <path d="M21 12H9" />
   </svg>
 );
+export const ChevronDownIcon = ({ className }: IconProps) => (
+  <svg {...base(className)} strokeWidth={2.5}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);

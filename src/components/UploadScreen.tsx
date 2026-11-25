@@ -1,6 +1,7 @@
 import type { Bank } from '../hooks/useBank';
 import { AiPromptPanel } from './AiPromptPanel';
 import { UploadPanel } from './UploadPanel';
+import { ChevronDownIcon } from './Icons';
 
 export function UploadScreen({ bank }: { bank: Bank }) {
   return (
@@ -33,9 +34,7 @@ export function UploadScreen({ bank }: { bank: Bank }) {
             <span className="block font-semibold text-brand-ink">Belum punya file soal? Buat dengan AI</span>
             <span className="block text-sm text-slate-600">Salin prompt siap pakai yang sudah berisi format yang benar.</span>
           </span>
-          <span className="text-slate-400 transition-transform group-open/ai:rotate-180" aria-hidden="true">
-            ▾
-          </span>
+          <ChevronDownIcon className="h-6 w-6 shrink-0 text-brand transition-transform group-open/ai:rotate-180" />
         </summary>
         <div className="border-t border-slate-200 p-4">
           <AiPromptPanel onPromptCopied={bank.rememberPrompt} />

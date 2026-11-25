@@ -3,7 +3,7 @@ import { DIFFICULTY_LABEL } from '../lib/labels';
 import { evaluateAnswer } from '../lib/scoring';
 import type { AnswerRecord, SessionQuestion } from '../types';
 import { FeedbackPanel } from './FeedbackPanel';
-import { BookmarkIcon, CheckIcon, ClockIcon, XIcon } from './Icons';
+import { BookmarkIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from './Icons';
 import { OptionButton } from './OptionButton';
 import { RichText } from './RichText';
 
@@ -84,9 +84,7 @@ export function ReviewList({ questions, answers, bookmarkEnabled, isBookmarked, 
                 </span>
                 <span className="line-clamp-2 text-[15px] text-slate-800">{q.question.split('\n')[0]}</span>
               </span>
-              <span className="mt-1 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true">
-                ▾
-              </span>
+              <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0 text-brand transition-transform group-open:rotate-180" />
             </summary>
             <div className="space-y-4 border-t border-slate-200 p-4">
               {bookmarkEnabled && (

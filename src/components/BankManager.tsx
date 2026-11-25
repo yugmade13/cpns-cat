@@ -4,6 +4,7 @@ import { describeCounts, displayName, type BankFile } from '../lib/bankFiles';
 import { AiPromptPanel } from './AiPromptPanel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { UploadPanel } from './UploadPanel';
+import { ChevronDownIcon } from './Icons';
 
 type Pending = { name: string; label: string } | null;
 
@@ -94,9 +95,7 @@ export function BankManager({ bank }: { bank: Bank }) {
             ({bank.all.length} soal, {bank.files.length} file)
           </span>
         </span>
-        <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true">
-          ▾
-        </span>
+        <ChevronDownIcon className="h-6 w-6 shrink-0 text-brand transition-transform group-open:rotate-180" />
       </summary>
       <div className="space-y-4 border-t border-slate-200 p-4 text-[15px]">
         <ul className="divide-y divide-slate-200 rounded-lg ring-1 ring-slate-200" aria-label="File soal tersimpan">
@@ -121,9 +120,7 @@ export function BankManager({ bank }: { bank: Bank }) {
         <details className="group/ai rounded-lg ring-1 ring-slate-200">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 font-semibold text-brand-ink hover:bg-slate-50">
             Buat soal baru dengan AI
-            <span className="text-slate-400 transition-transform group-open/ai:rotate-180" aria-hidden="true">
-              ▾
-            </span>
+            <ChevronDownIcon className="h-6 w-6 shrink-0 text-brand transition-transform group-open/ai:rotate-180" />
           </summary>
           <div className="border-t border-slate-200 p-3">
             <AiPromptPanel onPromptCopied={bank.rememberPrompt} />
