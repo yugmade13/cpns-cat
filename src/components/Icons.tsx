@@ -51,3 +51,10 @@ export const AlertIcon = ({ className }: IconProps) => (
     <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
   </svg>
 );
+export const LogoutIcon = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="m16 17 5-5-5-5" />
+    <path d="M21 12H9" />
+  </svg>
+);

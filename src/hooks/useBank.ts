@@ -36,7 +36,8 @@ export interface ImportReport {
 
 const SAVE_ERROR = 'Soal tidak berhasil disimpan di browser (mungkin penyimpanan penuh). Soal tetap bisa dipakai sampai halaman ditutup.';
 
-export function useBank() {
+/** Bank soal milik satu pengguna (owner = username). */
+export function useBank(owner: string) {
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState<BankFile[]>([]);
   const [persistent, setPersistent] = useState(true);
@@ -47,7 +48,7 @@ export function useBank() {
 
   useEffect(() => {
     let cancelled = false;
-    void loadStoredFiles().then(({ available, files: stored }) => {
+    void loadStoredFiles(owner).then(({ available, files: stored }) => {
       if (cancelled) return;
       setPersistent(available);
       setFiles(revalidate(stored));
@@ -56,7 +57,7 @@ export function useBank() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [owner]);
 
   const all = useMemo(() => files.flatMap((f) => f.questions), [files]);
 
@@ -91,13 +92,13 @@ export function useBank() {
       const changed = next.filter((f) => prepared.some((p) => p.name === f.name && p.questions.length > 0));
       if (!persistent || changed.length === 0) return;
       try {
-        await saveFiles(changed);
+        await saveFiles(owner, changed);
         setSaveError(null);
       } catch {
         setSaveError(SAVE_ERROR);
       }
     },
-    [persistent],
+    [persistent, owner],
   );
 
   const cancelImport = useCallback((prepared: PreparedFile[]) => setReport({ files: prepared, cancelled: true }), []);
@@ -106,13 +107,13 @@ export function useBank() {
   const removeFile = useCallback(
     async (name: string) => {
       // Hapus dari penyimpanan dulu agar muat ulang segera setelahnya tidak memunculkan soal lama.
-      if (persistent) await deleteStoredFile(name).catch(() => undefined);
+      if (persistent) await deleteStoredFile(owner, name).catch(() => undefined);
       const next = filesRef.current.filter((f) => f.name !== name);
       filesRef.current = next;
       setFiles(next);
       setReport(null); // laporan unggahan lama tidak relevan lagi
     },
-    [persistent],
+    [persistent, owner],
   );
 
   return {

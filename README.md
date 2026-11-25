@@ -8,7 +8,8 @@ diunggah oleh pengguna.
 
 ## Cara pakai
 
-1. Buka aplikasi. Jika belum ada soal, muncul layar **Unggah Bank Soal**.
+1. Buka aplikasi dan **masuk** dengan username & password yang terdaftar (lihat "Mengelola pengguna"). Jika belum
+   ada soal, muncul layar **Unggah Bank Soal**.
 2. Unggah file `.json` berisi soal. Satu file boleh berisi TWK, TIU, dan TKP sekaligus, dan beberapa file juga bisa
    diunggah bersamaan. Format lengkap ada di **[PANDUAN_SOAL.md](PANDUAN_SOAL.md)**.
    Belum punya file soal? Buka **Buat Soal dengan AI**, pilih kategori, jumlah, kesulitan, dan topik, lalu tekan
@@ -86,6 +87,33 @@ sehingga hasil build bisa dibuka dari domain utama maupun sub-folder.
 
 Aplikasi tidak memakai routing URL, jadi tidak perlu aturan *rewrite* atau halaman 404 khusus.
 
+## Mengelola pengguna (login)
+
+Aplikasi memakai login sederhana tanpa server: daftar pengguna ditulis di
+[src/config/users.ts](src/config/users.ts) sebagai array `{ username, password, name }`. Hanya pengguna di daftar itu
+yang bisa masuk.
+
+```ts
+export const USERS: AppUser[] = [
+  { username: 'andi', password: 'skd-andi-27', name: 'Andi' },
+  { username: 'budi', password: 'skd-budi-27', name: 'Budi' },
+];
+```
+
+- **Ganti contoh bawaan** (`peserta1` / `peserta2`) sebelum aplikasi dipakai.
+- Setelah menambah, mengubah, atau menghapus pengguna, **build dan deploy ulang** (`npm run build`).
+  `npm test` ikut memeriksa daftar ini (username ganda, kosong, berspasi, atau tanpa password).
+- Username tidak membedakan huruf besar/kecil; password membedakan.
+- Status login disimpan di browser (localStorage) dan bertahan sampai pengguna menekan **Keluar**. Pengguna yang
+  dihapus dari daftar otomatis keluar saat aplikasi dibuka lagi.
+- **Data tiap pengguna terpisah** (bank soal, bookmark, soal pernah salah) dan tetap tersimpan setelah keluar.
+- Keluar saat latihan/ujian sedang berjalan meminta konfirmasi, karena jawaban sesi itu tidak disimpan.
+
+> **Penting:** ini hanya gerbang sederhana, **bukan pengamanan**. Daftar pengguna dan password ikut terkirim ke
+> browser dan bisa dibaca lewat DevTools, dan status login bisa diubah oleh orang yang paham teknis. Gunakan password
+> khusus aplikasi ini (jangan password email/akun pribadi). Untuk pengamanan sungguhan, pakai proteksi di tingkat
+> hosting (mis. password protection Netlify/Vercel atau Cloudflare Access).
+
 ## Menulis soal
 
 Lihat **[PANDUAN_SOAL.md](PANDUAN_SOAL.md)** untuk format JSON (TWK/TIU dan TKP), contoh file gabungan, aturan validasi,
@@ -97,6 +125,9 @@ daftar topik, dan aturan kualitas. Ringkasnya: setiap file adalah array soal; TW
 
 ```
 src/types.ts         tipe data soal, sesi, hasil
+src/config/users.ts  daftar pengguna yang boleh login
+src/auth/            AuthContext (login/logout, status login di localStorage)
+src/App.tsx          gerbang: layar login atau Workspace (ruang kerja per pengguna)
 src/lib/             loader (normalisasi), validate, bankFiles (impor/ganti file), bankStore (IndexedDB),
                      shuffle, scoring, storage (localStorage), aiPrompt, topics, sessionTimer, clipboard, labels
 src/hooks/           useQuizSession (useReducer), useCountdown (timer sesi), useBank, useStoredIds
@@ -112,10 +143,11 @@ tests/               unit test Vitest (shuffle, scoring + timer sesi, validate, 
 - Aplikasi tidak menyertakan soal; kualitas dan kebenaran soal menjadi tanggung jawab penulis file soal.
   Validator memeriksa format, bukan kebenaran isi atau hitungan. Ini juga berlaku untuk soal buatan AI: AI bisa
   keliru soal fakta TWK maupun hitungan TIU, jadi periksa ulang sebelum dipakai.
+- Login hanya gerbang sederhana di browser, bukan pengamanan (lihat "Mengelola pengguna").
 - Aplikasi ini simulasi mandiri dan **tidak berafiliasi dengan BKN**; soal berasal dari pengguna, bukan soal resmi.
 - Data yang disimpan, semuanya hanya di browser pengguna dan tidak dikirim ke mana pun:
-  - bank soal hasil unggahan (IndexedDB);
-  - ID soal yang di-bookmark dan ID soal yang pernah salah (localStorage).
+  - status login (localStorage);
+  - per pengguna: bank soal hasil unggahan (IndexedDB) serta ID soal yang di-bookmark dan pernah salah (localStorage).
 
   Riwayat sesi dan skor tidak disimpan. Data berbeda untuk tiap browser/perangkat dan hilang jika data situs dihapus
   atau di mode privat.

@@ -1,13 +1,13 @@
-// Pembungkus localStorage yang aman. Hanya menyimpan dua daftar ID:
-// soal yang di-bookmark dan soal yang pernah salah.
-const STORAGE_KEYS = {
-  bookmarks: 'skd-cpns:bookmarks',
-  wrong: 'skd-cpns:wrong',
-} as const;
+// Pembungkus localStorage yang aman. Data latihan disimpan per pengguna (owner = username):
+// daftar soal yang di-bookmark dan soal yang pernah salah.
 
-export type StoredListKey = keyof typeof STORAGE_KEYS;
+export type StoredListKey = 'bookmarks' | 'wrong';
 
-function getStorage(): Storage | null {
+/** Kunci localStorage milik satu pengguna, mis. "skd-cpns:andi:bookmarks". */
+export const storageKey = (owner: string, key: StoredListKey) => `skd-cpns:${owner}:${key}`;
+
+/** localStorage bila bisa dipakai (tidak diblokir, tidak mode privat yang menolak tulis), selain itu null. */
+export function getStorage(): Storage | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     const probe = '__skd_probe__';
@@ -23,34 +23,34 @@ export function isStorageAvailable(): boolean {
   return getStorage() !== null;
 }
 
-export function readIds(key: StoredListKey): string[] {
+export function readIds(owner: string, key: StoredListKey): string[] {
   const s = getStorage();
   if (!s) return [];
   try {
-    const parsed: unknown = JSON.parse(s.getItem(STORAGE_KEYS[key]) ?? '[]');
+    const parsed: unknown = JSON.parse(s.getItem(storageKey(owner, key)) ?? '[]');
     return Array.isArray(parsed) ? [...new Set(parsed.filter((x): x is string => typeof x === 'string'))] : [];
   } catch {
     return [];
   }
 }
 
-export function writeIds(key: StoredListKey, ids: string[]): boolean {
+export function writeIds(owner: string, key: StoredListKey, ids: string[]): boolean {
   const s = getStorage();
   if (!s) return false;
   try {
-    s.setItem(STORAGE_KEYS[key], JSON.stringify([...new Set(ids)]));
+    s.setItem(storageKey(owner, key), JSON.stringify([...new Set(ids)]));
     return true;
   } catch {
     return false;
   }
 }
 
-export function clearStored(): void {
+export function clearStored(owner: string): void {
   const s = getStorage();
   if (!s) return;
   try {
-    s.removeItem(STORAGE_KEYS.bookmarks);
-    s.removeItem(STORAGE_KEYS.wrong);
+    s.removeItem(storageKey(owner, 'bookmarks'));
+    s.removeItem(storageKey(owner, 'wrong'));
   } catch {
     /* abaikan */
   }

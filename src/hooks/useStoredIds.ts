@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 import { clearStored, isStorageAvailable, readIds, writeIds, type StoredListKey } from '../lib/storage';
 
-/** Daftar ID bookmark & soal yang pernah salah, disinkronkan ke localStorage bila tersedia. */
-export function useStoredIds() {
+/** Daftar ID bookmark & soal yang pernah salah milik satu pengguna, disinkronkan ke localStorage bila tersedia. */
+export function useStoredIds(owner: string) {
   const [available] = useState(isStorageAvailable);
-  const [bookmarks, setBookmarks] = useState<string[]>(() => readIds('bookmarks'));
-  const [wrong, setWrong] = useState<string[]>(() => readIds('wrong'));
+  const [bookmarks, setBookmarks] = useState<string[]>(() => readIds(owner, 'bookmarks'));
+  const [wrong, setWrong] = useState<string[]>(() => readIds(owner, 'wrong'));
 
   const update = useCallback(
     (key: StoredListKey, fn: (prev: string[]) => string[]) => {
@@ -13,11 +13,11 @@ export function useStoredIds() {
       const setter = key === 'bookmarks' ? setBookmarks : setWrong;
       setter((prev) => {
         const next = fn(prev);
-        writeIds(key, next);
+        writeIds(owner, key, next);
         return next;
       });
     },
-    [available],
+    [available, owner],
   );
 
   const toggleBookmark = useCallback(
@@ -27,10 +27,10 @@ export function useStoredIds() {
   const markWrong = useCallback((id: string) => update('wrong', (p) => (p.includes(id) ? p : [...p, id])), [update]);
   const markRight = useCallback((id: string) => update('wrong', (p) => p.filter((x) => x !== id)), [update]);
   const clearAll = useCallback(() => {
-    clearStored();
+    clearStored(owner);
     setBookmarks([]);
     setWrong([]);
-  }, []);
+  }, [owner]);
 
   return { available, bookmarks, wrong, toggleBookmark, markWrong, markRight, clearAll };
 }
