@@ -1,16 +1,43 @@
-// Validator bank soal: `npm run validate`
-// Membaca semua berkas JSON di public/data, memakai ulang aturan di src/lib/validate.ts,
-// dan keluar dengan kode 1 jika ada kesalahan.
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+// Validator bank soal.
+//   npm run validate -- bank-soal.json            (satu file)
+//   npm run validate -- twk.json tiu.json         (beberapa file)
+//   npm run validate -- folder-soal               (semua .json di folder)
+//   npm run validate                              (default: folder bank-soal/)
+// Memakai ulang aturan di src/lib/validate.ts dan keluar dengan kode 1 jika ada kesalahan.
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { parseQuestions } from '../src/lib/loader';
 import { bankStats, findBankIssues } from '../src/lib/validate';
 import type { Question } from '../src/types';
 
-const dataDir = resolve(process.argv[2] ?? 'public/data');
-const files = readdirSync(dataDir)
-  .filter((f) => f.endsWith('.json'))
-  .sort();
+const DEFAULT_DIR = 'bank-soal';
+const args = process.argv.slice(2);
+const targets = (args.length > 0 ? args : [DEFAULT_DIR]).map((a) => resolve(a));
+
+const files: string[] = [];
+for (const t of targets) {
+  if (!existsSync(t)) {
+    console.error(`Path tidak ditemukan: ${t}`);
+    continue;
+  }
+  if (statSync(t).isDirectory()) {
+    readdirSync(t)
+      .filter((f) => f.toLowerCase().endsWith('.json'))
+      .sort()
+      .forEach((f) => files.push(join(t, f)));
+  } else {
+    files.push(t);
+  }
+}
+
+if (files.length === 0) {
+  console.error(
+    'Tidak ada file soal (.json) yang bisa divalidasi.\n' +
+      'Contoh: npm run validate -- bank-soal.json\n' +
+      `Tanpa argumen, validator membaca semua .json di folder "${DEFAULT_DIR}/".`,
+  );
+  process.exit(1);
+}
 
 let errorCount = 0;
 let warningCount = 0;
@@ -20,12 +47,13 @@ const ids = new Set<string>();
 const line = (s = '') => console.log(s);
 const header = (s: string) => line(`\n=== ${s} ===`);
 
-header(`Memvalidasi ${files.length} berkas di ${dataDir}`);
+header(`Memvalidasi ${files.length} berkas`);
 
-for (const file of files) {
+for (const path of files) {
+  const file = basename(path);
   let data: unknown;
   try {
-    data = JSON.parse(readFileSync(join(dataDir, file), 'utf8'));
+    data = JSON.parse(readFileSync(path, 'utf8'));
   } catch (e) {
     errorCount++;
     line(`✗ ${file}: bukan JSON yang valid (${(e as Error).message})`);

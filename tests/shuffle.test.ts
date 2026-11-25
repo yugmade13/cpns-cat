@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { buildSession, buildSessionQuestion, shuffleArray } from '../src/lib/shuffle';
 import { evaluateAnswer } from '../src/lib/scoring';
 import { OPTION_IDS } from '../src/types';
-import { loadAll, makeChoice, seededRng } from './helpers';
+import { fixtureBank, makeChoice, seededRng } from './helpers';
 
 const ITERATIONS = 5000;
-const bank = loadAll();
+const bank = fixtureBank();
 
 describe('shuffleArray', () => {
   it('mempertahankan semua elemen dan tidak mengubah input', () => {
@@ -47,9 +47,9 @@ describe('buildSessionQuestion', () => {
           // Memilih opsi yang teksnya = teks kunci asli harus selalu dinilai benar.
           const correctText = textById.get(q.correctAnswer);
           const shown = sq.options.find((o) => o.text === correctText)!;
-          expect(evaluateAnswer(sq, { selectedOriginalId: shown.originalId, timedOut: false }).status).toBe('correct');
+          expect(evaluateAnswer(sq, { selectedOriginalId: shown.originalId }).status).toBe('correct');
           for (const o of sq.options.filter((x) => x.text !== correctText)) {
-            expect(evaluateAnswer(sq, { selectedOriginalId: o.originalId, timedOut: false }).status).toBe('wrong');
+            expect(evaluateAnswer(sq, { selectedOriginalId: o.originalId }).status).toBe('wrong');
           }
         }
       }

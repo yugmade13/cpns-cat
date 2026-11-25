@@ -13,13 +13,6 @@ export const CATEGORY_FILTER_LABEL: Record<CategoryFilter, string> = {
   MIX: 'Campuran',
 };
 
-export const CATEGORY_DESCRIPTION: Record<CategoryFilter, string> = {
-  TWK: 'Tes Wawasan Kebangsaan',
-  TIU: 'Tes Intelegensia Umum',
-  TKP: 'Tes Karakteristik Pribadi',
-  MIX: 'Gabungan TWK, TIU, dan TKP',
-};
-
 export const CATEGORY_NAME: Record<Category, string> = {
   TWK: 'Tes Wawasan Kebangsaan',
   TIU: 'Tes Intelegensia Umum',

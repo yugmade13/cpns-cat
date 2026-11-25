@@ -1,8 +1,6 @@
-// Memuat file JSON soal, menormalkan alias field, dan memvalidasi setiap soal.
+// Mengurai file JSON soal: menormalkan alias field dan memvalidasi setiap soal.
 import { OPTION_IDS, type Question } from '../types';
 import { validateQuestion } from './validate';
-
-export const DATA_FILES = ['twk.json', 'tiu.json', 'tkp.json'] as const;
 
 /** Field yang dikenali (format baku). Field lain disimpan ke `extra`. */
 const KNOWN_FIELDS = new Set([
@@ -182,37 +180,4 @@ export function logRejected(rejected: RejectedQuestion[]): void {
   for (const r of rejected) {
     console.warn(`[Bank soal] Soal "${r.id}" (${r.source}) dilewati: ${r.errors.join(' ')}`);
   }
-}
-
-/** Memuat seluruh file soal bawaan dari public/data. Melempar error jika ada berkas gagal dimuat. */
-export async function loadBank(baseUrl: string = import.meta.env.BASE_URL): Promise<ParseResult> {
-  const prefix = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  const responses = await Promise.all(
-    DATA_FILES.map(async (file) => {
-      const res = await fetch(`${prefix}data/${file}`, { cache: 'no-cache' });
-      if (!res.ok) throw new Error(`Berkas ${file} gagal dimuat (HTTP ${res.status}).`);
-      try {
-        return { file, data: (await res.json()) as unknown };
-      } catch {
-        throw new Error(`Berkas ${file} bukan JSON yang valid.`);
-      }
-    }),
-  );
-
-  const merged: ParseResult = { questions: [], rejected: [], warnings: [] };
-  const ids = new Set<string>();
-  for (const { file, data } of responses) {
-    const r = parseQuestions(data, file, ids);
-    r.questions.forEach((q) => ids.add(q.id));
-    merged.questions.push(...r.questions);
-    merged.rejected.push(...r.rejected);
-    merged.warnings.push(...r.warnings);
-  }
-  logRejected(merged.rejected);
-  return merged;
-}
-
-/** Mengubah soal ke bentuk JSON baku untuk diekspor (termasuk field `extra`). */
-export function toExportJson(questions: Question[]): string {
-  return JSON.stringify(questions, null, 2);
 }

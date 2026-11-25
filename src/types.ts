@@ -65,18 +65,12 @@ export type Question = ChoiceQuestion | TkpQuestion;
 // ---------- Sesi latihan ----------
 
 export type CategoryFilter = Category | 'MIX';
-export type DifficultyFilter = Difficulty | 'ALL';
-export type QuestionSource = 'all' | 'bookmark' | 'wrong';
-export type TimerSetting = 0 | 60 | 90;
-export type CountSetting = 5 | 10 | 20 | 'ALL';
-
+/** Waktu total satu sesi latihan dalam menit (0 = tanpa batas waktu). */
+export type TimerSetting = 0 | 10 | 15 | 20 | 30 | 45 | 60;
+export const TIMER_OPTIONS: readonly TimerSetting[] = [0, 10, 15, 20, 30, 45, 60];
 export interface SessionConfig {
-  category: CategoryFilter;
-  topic: string | 'ALL';
-  difficulty: DifficultyFilter;
-  count: CountSetting;
+  /** Waktu total sesi dalam menit (0 = tanpa batas). */
   timer: TimerSetting;
-  source: QuestionSource;
 }
 
 /** Opsi setelah diacak: label tampilan baru, id asli tetap disimpan. */
@@ -97,7 +91,6 @@ export interface SessionQuestion {
 export interface AnswerRecord {
   /** id opsi ASLI yang dipilih; null jika tidak terjawab (waktu habis). */
   selectedOriginalId: OptionId | null;
-  timedOut: boolean;
 }
 
 export type AnswerStatus = 'correct' | 'wrong' | 'unanswered' | 'scored';

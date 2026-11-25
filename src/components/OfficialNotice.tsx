@@ -13,7 +13,7 @@ export function Footer() {
     <footer className="mt-10 border-t border-slate-200 bg-white px-4 py-5 text-center text-xs text-slate-600">
       <OfficialNotice />
       <p className="mt-2">
-        Latihan SKD CPNS 2026 · Soal disusun untuk latihan mandiri dan tidak berasal dari ujian resmi.
+        Latihan SKD CPNS 2027 · Soal disusun untuk latihan mandiri dan tidak berasal dari ujian resmi.
       </p>
     </footer>
   );

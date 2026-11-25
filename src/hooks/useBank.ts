@@ -1,75 +1,142 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { loadBank, logRejected, parseQuestions, type RejectedQuestion } from '../lib/loader';
-import type { Question } from '../types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  applyImport,
+  MAX_UPLOAD_BYTES,
+  parseUploadText,
+  pastedFileName,
+  prepareImport,
+  type BankFile,
+  type ParsedUpload,
+  type PreparedFile,
+} from '../lib/bankFiles';
+import { deleteStoredFile, loadStoredFiles, saveFiles } from '../lib/bankStore';
+import { logRejected, parseQuestions } from '../lib/loader';
 
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'ready'; builtIn: Question[]; rejected: RejectedQuestion[] };
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-export interface ImportReport {
-  fileName: string;
-  added: number;
-  rejected: RejectedQuestion[];
-  fatal: string | null;
+/** Memvalidasi ulang file yang tersimpan (aturan bisa berubah antarversi aplikasi). */
+function revalidate(stored: unknown[]): BankFile[] {
+  const ids = new Set<string>();
+  const files: BankFile[] = [];
+  for (const raw of stored) {
+    if (!isRecord(raw) || typeof raw.name !== 'string') continue;
+    const r = parseQuestions(raw.questions, raw.name, ids);
+    logRejected(r.rejected);
+    r.questions.forEach((q) => ids.add(q.id));
+    if (r.questions.length > 0) {
+      files.push({ name: raw.name, uploadedAt: typeof raw.uploadedAt === 'number' ? raw.uploadedAt : 0, questions: r.questions });
+    }
+  }
+  return files.sort((a, b) => a.uploadedAt - b.uploadedAt || a.name.localeCompare(b.name));
 }
 
-const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+export interface ImportReport {
+  files: PreparedFile[];
+  cancelled: boolean;
+}
+
+const SAVE_ERROR = 'Soal tidak berhasil disimpan di browser (mungkin penyimpanan penuh). Soal tetap bisa dipakai sampai halaman ditutup.';
 
 export function useBank() {
-  const [state, setState] = useState<LoadState>({ status: 'loading' });
-  const [imported, setImported] = useState<Question[]>([]);
-  const [attempt, setAttempt] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [files, setFiles] = useState<BankFile[]>([]);
+  const [persistent, setPersistent] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const filesRef = useRef(files);
+  filesRef.current = files;
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'loading' });
-    loadBank()
-      .then((r) => {
-        if (!cancelled) setState({ status: 'ready', builtIn: r.questions, rejected: r.rejected });
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setState({ status: 'error', message: e instanceof Error ? e.message : String(e) });
-      });
+    void loadStoredFiles().then(({ available, files: stored }) => {
+      if (cancelled) return;
+      setPersistent(available);
+      setFiles(revalidate(stored));
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
+  }, []);
 
-  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  const all = useMemo(() => files.flatMap((f) => f.questions), [files]);
 
-  const all = useMemo(
-    () => (state.status === 'ready' ? [...state.builtIn, ...imported] : []),
-    [state, imported],
-  );
+  const prepareUploads = (uploads: ParsedUpload[]): PreparedFile[] => {
+    const prepared = prepareImport(filesRef.current, uploads);
+    prepared.forEach((p) => logRejected(p.rejected));
+    return prepared;
+  };
 
-  const importFile = useCallback(
-    async (file: File): Promise<ImportReport> => {
-      const report: ImportReport = { fileName: file.name, added: 0, rejected: [], fatal: null };
-      if (file.size > MAX_IMPORT_BYTES) {
-        report.fatal = 'Ukuran berkas melebihi 5 MB.';
-        return report;
-      }
-      let data: unknown;
+  /** Membaca & memvalidasi file pilihan pengguna tanpa mengubah bank. */
+  const prepare = useCallback(async (list: File[]): Promise<PreparedFile[]> => {
+    const uploads: ParsedUpload[] = await Promise.all(
+      list.map(async (file) => {
+        if (file.size > MAX_UPLOAD_BYTES) return { name: file.name, fatal: 'Ukuran berkas melebihi 5 MB.' };
+        try {
+          return parseUploadText(file.name, await file.text());
+        } catch (e) {
+          return { name: file.name, fatal: `Berkas gagal dibaca: ${(e as Error).message}` };
+        }
+      }),
+    );
+    return prepareUploads(uploads);
+  }, []);
+
+  /** Sama seperti prepare, untuk teks JSON yang ditempel langsung (mis. jawaban AI). */
+  const prepareText = useCallback((text: string): PreparedFile[] => {
+    const parsed = parseUploadText('teks tempelan', text);
+    const name = parsed.fatal ? 'Teks tempelan' : pastedFileName(parsed.data);
+    return prepareUploads([{ ...parsed, name }]);
+  }, []);
+
+  /** Menerapkan hasil persiapan ke bank dan menyimpannya di browser. */
+  const commit = useCallback(
+    async (prepared: PreparedFile[]) => {
+      const next = applyImport(filesRef.current, prepared);
+      filesRef.current = next;
+      setFiles(next);
+      setReport({ files: prepared, cancelled: false });
+      const changed = next.filter((f) => prepared.some((p) => p.name === f.name && p.questions.length > 0));
+      if (!persistent || changed.length === 0) return;
       try {
-        data = JSON.parse(await file.text());
+        await saveFiles(changed);
+        setSaveError(null);
       } catch {
-        report.fatal = 'Berkas bukan JSON yang valid. Periksa tanda koma, kutip, dan kurung.';
-        return report;
+        setSaveError(SAVE_ERROR);
       }
-      const r = parseQuestions(data, file.name, new Set(all.map((q) => q.id)));
-      logRejected(r.rejected);
-      report.added = r.questions.length;
-      report.rejected = r.rejected;
-      if (r.questions.length > 0) setImported((prev) => [...prev, ...r.questions]);
-      return report;
     },
-    [all],
+    [persistent],
   );
 
-  const clearImported = useCallback(() => setImported([]), []);
+  const cancelImport = useCallback((prepared: PreparedFile[]) => setReport({ files: prepared, cancelled: true }), []);
+  const dismissReport = useCallback(() => setReport(null), []);
 
-  return { state, all, imported, retry, importFile, clearImported };
+  const removeFile = useCallback(
+    async (name: string) => {
+      // Hapus dari penyimpanan dulu agar muat ulang segera setelahnya tidak memunculkan soal lama.
+      if (persistent) await deleteStoredFile(name).catch(() => undefined);
+      const next = filesRef.current.filter((f) => f.name !== name);
+      filesRef.current = next;
+      setFiles(next);
+      setReport(null); // laporan unggahan lama tidak relevan lagi
+    },
+    [persistent],
+  );
+
+  return {
+    loading,
+    files,
+    all,
+    persistent,
+    saveError,
+    report,
+    prepare,
+    prepareText,
+    commit,
+    cancelImport,
+    dismissReport,
+    removeFile,
+  };
 }
 
 export type Bank = ReturnType<typeof useBank>;

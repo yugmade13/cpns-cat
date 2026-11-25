@@ -44,7 +44,7 @@ export function referencesOtherOptions(text: string): boolean {
   return OPTION_REFERENCE_PATTERNS.some((re) => re.test(text));
 }
 
-export function normalizeText(s: string): string {
+function normalizeText(s: string): string {
   return s
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
@@ -261,14 +261,14 @@ function tokenSet(q: Question): Set<string> {
   return new Set(normalizeText(base).split(' ').filter((w) => w.length > 2));
 }
 
-export function jaccard(a: Set<string>, b: Set<string>): number {
+function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 1;
   let inter = 0;
   for (const x of a) if (b.has(x)) inter++;
   return inter / (a.size + b.size - inter);
 }
 
-export const SIMILARITY_THRESHOLD = 0.8;
+const SIMILARITY_THRESHOLD = 0.8;
 
 /** Mencari ID ganda, teks soal ganda, dan soal yang sangat mirip. */
 export function findBankIssues(questions: Question[]): BankIssue[] {

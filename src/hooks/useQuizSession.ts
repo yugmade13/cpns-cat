@@ -3,20 +3,29 @@ import type { AnswerRecord, OptionId, SessionConfig, SessionQuestion } from '../
 
 export interface QuizState {
   config: SessionConfig;
-  /** Judul sesi, mis. "Latihan TWK" atau "Ulangi Soal yang Salah". */
+  /** Judul sesi, mis. "Latihan Semua Soal" atau "Ulangi Soal yang Salah". */
   title: string;
   questions: SessionQuestion[];
   answers: (AnswerRecord | null)[];
   index: number;
   finished: boolean;
-  /** Pemberitahuan saat soal yang tersedia lebih sedikit dari permintaan. */
-  notice: string | null;
+  /** Batas waktu sesi (epoch ms), atau null jika tanpa timer. */
+  deadline: number | null;
+  /** true jika sesi berakhir karena waktu habis. */
+  expired: boolean;
 }
 
 export type QuizAction =
-  | { type: 'start'; config: SessionConfig; title: string; questions: SessionQuestion[]; notice: string | null }
+  | {
+      type: 'start';
+      config: SessionConfig;
+      title: string;
+      questions: SessionQuestion[];
+      /** Waktu mulai (epoch ms); dipakai untuk menghitung batas waktu sesi. */
+      now: number;
+    }
   | { type: 'answer'; originalId: OptionId }
-  | { type: 'timeout' }
+  | { type: 'expire' }
   | { type: 'next' }
   | { type: 'exit' };
 
@@ -30,7 +39,8 @@ export function quizReducer(state: QuizState | null, action: QuizAction): QuizSt
       answers: action.questions.map(() => null),
       index: 0,
       finished: false,
-      notice: action.notice,
+      deadline: action.config.timer > 0 ? action.now + action.config.timer * 60_000 : null,
+      expired: false,
     };
   }
   if (action.type === 'exit') return null;
@@ -38,21 +48,21 @@ export function quizReducer(state: QuizState | null, action: QuizAction): QuizSt
 
   const current = state.answers[state.index];
   switch (action.type) {
-    case 'answer':
-    case 'timeout': {
+    case 'answer': {
       if (current) return state; // jawaban sudah dikunci
-      const record: AnswerRecord =
-        action.type === 'answer'
-          ? { selectedOriginalId: action.originalId, timedOut: false }
-          : { selectedOriginalId: null, timedOut: true };
       const answers = [...state.answers];
-      answers[state.index] = record;
+      answers[state.index] = { selectedOriginalId: action.originalId };
       return { ...state, answers };
+    }
+    case 'expire': {
+      // Waktu sesi habis: semua soal yang belum dijawab dihitung tidak terjawab, sesi selesai.
+      const answers = state.answers.map((a) => a ?? { selectedOriginalId: null });
+      return { ...state, answers, finished: true, expired: true };
     }
     case 'next': {
       if (!current) return state; // belum dijawab, tidak boleh lanjut
       if (state.index >= state.questions.length - 1) return { ...state, finished: true };
-      return { ...state, index: state.index + 1, notice: null };
+      return { ...state, index: state.index + 1 };
     }
     default:
       return state;

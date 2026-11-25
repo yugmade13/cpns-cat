@@ -1,22 +1,37 @@
-# Panduan Penulisan Soal — Latihan SKD CPNS 2026
+# Panduan Penulisan Soal — Latihan SKD CPNS 2027
 
-Dokumen ini adalah acuan untuk menambah soal ke `public/data/twk.json`, `tiu.json`, dan `tkp.json`.
-Aplikasi memuat berkas-berkas ini saat dibuka, jadi **menambah soal tidak perlu mengubah kode atau build ulang**
-(pada hosting statis cukup unggah ulang berkas JSON-nya).
+Dokumen ini adalah acuan untuk menulis file soal (`.json`) yang diunggah ke aplikasi.
+Aplikasi **tidak membawa soal bawaan**: pengguna mengunggah file soal (tab "Unggah File") atau menempel teks JSON
+(tab "Tempel Teks") lewat layar "Unggah Bank Soal" atau menu "Kelola Bank Soal". Teks tempelan disimpan seperti file;
+namanya diambil dari awalan ID prompt AI (mis. `ai2611251432xy.json`), sehingga menempel ulang batch yang sama akan
+menggantikan versi lamanya. Soal disimpan di browser pengguna (IndexedDB) sehingga cukup diunggah sekali per browser.
 
-Setelah setiap batch soal, jalankan:
+- Satu file boleh berisi soal **TWK, TIU, dan TKP sekaligus**. Kategori ditentukan oleh field `category` tiap soal,
+  bukan oleh nama file.
+- Boleh juga memecah soal ke beberapa file (misalnya per kategori atau per batch). Beberapa file bisa diunggah sekaligus.
+- Mengunggah file dengan **nama yang sama** akan mengganti isi file lama (aplikasi meminta konfirmasi).
+- Soal yang tidak valid dilewati; alasannya ditampilkan di laporan unggahan dan dicatat di console browser.
+
+Untuk membuat soal dengan bantuan AI, pakai tombol **Salin Prompt** di panel "Buat Soal dengan AI" (layar unggah atau
+menu Kelola Bank Soal). Prompt tersebut sudah memuat format dan aturan di dokumen ini (disusun di `src/lib/aiPrompt.ts`;
+jika aturan di dokumen ini berubah, perbarui juga file itu). Hasil AI tetap wajib diperiksa terhadap aturan kualitas
+di bagian 4.
+
+Sebelum mengunggah, periksa file dengan validator:
 
 ```bash
-npm run validate   # aturan format, duplikasi, sebaran jawaban
-npm test           # termasuk verifikasi hitungan TIU numerik
+npm run validate -- bank-soal.json        # satu file
+npm run validate -- twk.json tiu.json     # beberapa file (ID dicek unik lintas file)
+npm run validate -- folder-soal           # semua .json di folder
+npm run validate                          # default: semua .json di folder bank-soal/
 ```
 
 ---
 
 ## 1. Format JSON
 
-Setiap berkas berisi **array** soal. Ketiga berkas memakai format yang sama; kategori ditentukan oleh field `category`
-(berkas hanya untuk kerapian).
+Setiap file berisi **array** soal (atau objek `{ "questions": [ … ] }`). Soal TWK/TIU dan TKP memakai bentuk yang
+sedikit berbeda (lihat 1.1 dan 1.2), tetapi boleh dicampur dalam satu array.
 
 ### 1.1 Soal TWK dan TIU
 
@@ -96,7 +111,26 @@ Setiap berkas berisi **array** soal. Ketiga berkas memakai format yang sama; kat
 
 TKP **tidak** memakai `correctAnswer`. Setiap opsi wajib punya `score` dan `explanation`.
 
-### 1.3 Alias yang diterima (untuk impor)
+### 1.3 Contoh satu file gabungan
+
+```json
+[
+  { "id": "twk-001", "category": "TWK", "topic": "Pancasila", "difficulty": "easy",
+    "question": "…", "options": [ { "id": "A", "text": "…" }, … ],
+    "correctAnswer": "C", "explanation": "…", "reference": "…" },
+  { "id": "tiu-001", "category": "TIU", "subtype": "numerik", "topic": "Deret angka", "difficulty": "medium",
+    "question": "…", "options": [ … ], "correctAnswer": "D", "explanation": "…",
+    "solutionSteps": ["…"], "shortcut": "…", "timeTip": "…" },
+  { "id": "tkp-001", "category": "TKP", "topic": "Integritas", "difficulty": "hard",
+    "context": "…", "question": "Apa yang sebaiknya Anda lakukan?",
+    "options": [ { "id": "A", "text": "…", "score": 4, "explanation": "…" }, … ],
+    "competency": "…", "principle": "…", "whyBest": "…", "lesson": "…" }
+]
+```
+
+(`…` hanya penanda singkat di dokumen ini; file sungguhan harus berisi lima opsi lengkap.)
+
+### 1.4 Alias yang diterima
 
 Normalizer di `src/lib/loader.ts` menerima alias berikut dan mengubahnya ke format baku:
 
@@ -116,7 +150,7 @@ Normalizer di `src/lib/loader.ts` menerima alias berikut dan mengubahnya ke form
 Opsi boleh ditulis sebagai objek: `"options": { "A": "…", "B": "…", … }`.
 Field yang tidak dikenali disimpan di `extra` sehingga tidak hilang saat diekspor.
 
-### 1.4 Rujukan huruf opsi di pembahasan
+### 1.5 Rujukan huruf opsi di pembahasan
 
 Karena opsi diacak, huruf yang dilihat pengguna bisa berbeda dari huruf di JSON. Aplikasi otomatis mengganti
 frasa **"opsi X"**, **"pilihan X"**, dan **"jawaban X"** di `explanation`, `optionNotes`, `whyBest`, dan penjelasan opsi
@@ -127,9 +161,11 @@ Lebih aman lagi: sebut isi opsinya, bukan hurufnya.
 
 ## 2. Aturan validasi
 
-Soal yang melanggar aturan berikut **ditolak** (dilewati oleh aplikasi dan dicatat di console; `npm run validate` gagal):
+Soal yang melanggar aturan berikut **ditolak** (dilewati saat diunggah dan dicantumkan di laporan unggahan;
+`npm run validate` gagal):
 
-- `id` unik di seluruh bank soal.
+- `id` unik di seluruh bank soal, termasuk lintas file yang sudah diunggah. (Saat file bernama sama diganti, ID dari
+  versi lamanya tidak dianggap bentrok.)
 - Tepat lima opsi dengan id A, B, C, D, E; teks tidak kosong; tidak ada dua opsi dengan teks sama.
 - `category` hanya `TWK`, `TIU`, `TKP`. `difficulty` hanya `easy`, `medium`, `hard`.
 - TWK/TIU: `correctAnswer` salah satu dari A–E dan `explanation` tidak kosong.
@@ -154,7 +190,8 @@ Peringatan (tidak menggagalkan validasi, tetapi sebaiknya diperbaiki):
 
 ## 3. Daftar topik yang didukung
 
-Tulis nama topik persis seperti di bawah agar filter topik tidak terpecah.
+Tulis nama topik persis seperti di bawah agar filter topik tidak terpecah. (Daftar yang sama dipakai prompt AI,
+di `src/lib/topics.ts`.)
 
 **TWK:** Pancasila · UUD 1945 · NKRI · Bhinneka Tunggal Ika · Nasionalisme · Bela negara · Integritas ·
 Sejarah Indonesia · Tata negara · Peran dan kedudukan ASN
@@ -203,6 +240,6 @@ Kualitas lebih penting daripada jumlah.
 - TKP: penjelasan untuk kelima opsi, plus `competency`, `principle`, `whyBest`, `lesson`.
 
 **Verifikasi TIU numerik**
-Setiap soal numerik wajib dihitung ulang secara independen. Tambahkan pengecekan di `tests/numeric.test.ts`
-(hitung ulang dari angka di soal, lalu pastikan **tepat satu** opsi yang cocok dengan `correctAnswer`). Test di berkas
-itu juga gagal jika ada soal `subtype: "numerik"` yang belum punya verifikasi, sehingga daftar di test harus diperbarui.
+Validator hanya memeriksa format, **bukan** kebenaran hitungan. Setiap soal numerik wajib dihitung ulang secara
+independen oleh penulis (misalnya dengan skrip kecil atau hitungan manual kedua) sebelum diunggah, dan dipastikan
+**tepat satu** opsi yang cocok dengan `correctAnswer`. Jangan mengandalkan perkiraan.

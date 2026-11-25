@@ -9,10 +9,10 @@ import type {
   WeakTopic,
 } from '../types';
 
-export const POINTS_PER_CORRECT = 5;
-export const TKP_MAX_POINTS = 5;
+const POINTS_PER_CORRECT = 5;
+const TKP_MAX_POINTS = 5;
 /** Skor TKP di bawah nilai ini dianggap perlu diulang. */
-export const TKP_REVIEW_THRESHOLD = 4;
+const TKP_REVIEW_THRESHOLD = 4;
 
 export function evaluateAnswer(sq: SessionQuestion, answer: AnswerRecord | null | undefined): AnswerEvaluation {
   const q = sq.question;

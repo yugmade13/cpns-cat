@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTimer } from '../hooks/useTimer';
+import { formatClock, useCountdown } from '../hooks/useCountdown';
 import type { QuizState } from '../hooks/useQuizSession';
 import { DIFFICULTY_LABEL, subtypeLabel } from '../lib/labels';
 import type { OptionId } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FeedbackPanel } from './FeedbackPanel';
-import { AlertIcon, BookmarkIcon, ClockIcon } from './Icons';
+import { BookmarkIcon, ClockIcon } from './Icons';
 import { OptionButton } from './OptionButton';
 import { RichText } from './RichText';
 
@@ -15,14 +15,15 @@ interface Props {
   isBookmarked: (id: string) => boolean;
   onToggleBookmark: (id: string) => void;
   onAnswer: (originalId: OptionId) => void;
-  onTimeout: () => void;
+  /** Dipanggil saat waktu sesi habis. */
+  onExpire: () => void;
   onNext: () => void;
   onExit: () => void;
 }
 
 const KEY_TO_INDEX: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, a: 0, b: 1, c: 2, d: 3, e: 4 };
 
-export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBookmark, onAnswer, onTimeout, onNext, onExit }: Props) {
+export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBookmark, onAnswer, onExpire, onNext, onExit }: Props) {
   const sq = quiz.questions[quiz.index]!;
   const q = sq.question;
   const answer = quiz.answers[quiz.index] ?? null;
@@ -31,9 +32,8 @@ export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBo
   const isLast = quiz.index === total - 1;
   const [confirmExit, setConfirmExit] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
-  const timerOn = quiz.config.timer > 0;
-
-  const remaining = useTimer(quiz.config.timer, quiz.index, timerOn && !answered, onTimeout);
+  // Timer total sesi: berjalan terus lintas soal sampai sesi selesai.
+  const remaining = useCountdown(quiz.deadline, onExpire);
 
   // Kembali ke atas saat pindah soal.
   useEffect(() => {
@@ -73,7 +73,7 @@ export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBo
   const progress = ((quiz.index + (answered ? 1 : 0)) / total) * 100;
   const sub = subtypeLabel(q);
   const bookmarked = isBookmarked(q.id);
-  const lowTime = timerOn && !answered && remaining <= 10;
+  const lowTime = remaining !== null && remaining <= 60;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-3 pb-8 pt-3 sm:px-6 sm:pt-6">
@@ -86,15 +86,16 @@ export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBo
           <p className="text-sm font-semibold text-navy-800" aria-live="polite">
             Soal {quiz.index + 1} dari {total}
           </p>
-          {timerOn ? (
+          {remaining !== null ? (
             <p
               className={`flex min-w-[4.5rem] items-center justify-end gap-1 text-sm font-bold tabular-nums ${
-                answered ? 'text-slate-400' : lowTime ? 'text-red-700' : 'text-navy-800'
+                lowTime ? 'rounded-md bg-red-50 px-1.5 text-red-700' : 'text-navy-800'
               }`}
-              aria-label={`Sisa waktu ${remaining} detik`}
+              role="timer"
+              aria-label={`Sisa waktu latihan ${Math.floor(remaining / 60)} menit ${remaining % 60} detik`}
             >
               <ClockIcon className="h-4 w-4" />
-              {remaining} dtk
+              {formatClock(remaining)}
             </p>
           ) : (
             <span className="min-w-[4.5rem]" />
@@ -104,13 +105,6 @@ export function QuestionScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBo
           <div className="h-full rounded-full bg-royal-600 transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>
-
-      {quiz.notice && (
-        <p className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">
-          <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          {quiz.notice}
-        </p>
-      )}
 
       <article className="card p-4 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center gap-1.5">

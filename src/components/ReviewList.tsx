@@ -20,7 +20,7 @@ type Filter = 'all' | 'review';
 export function ReviewList({ questions, answers, bookmarkEnabled, isBookmarked, onToggleBookmark }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const items = questions
-    .map((sq, i) => ({ sq, i, answer: answers[i] ?? { selectedOriginalId: null, timedOut: true }, ev: evaluateAnswer(sq, answers[i]) }))
+    .map((sq, i) => ({ sq, i, answer: answers[i] ?? { selectedOriginalId: null }, ev: evaluateAnswer(sq, answers[i]) }))
     .filter((x) => filter === 'all' || x.ev.needsReview);
   const reviewCount = questions.filter((sq, i) => evaluateAnswer(sq, answers[i]).needsReview).length;
 

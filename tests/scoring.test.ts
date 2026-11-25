@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateAnswer, summarizeSession, topicAdvice } from '../src/lib/scoring';
 import { buildSessionQuestion } from '../src/lib/shuffle';
+import { quizReducer } from '../src/hooks/useQuizSession';
 import type { AnswerRecord, OptionId } from '../src/types';
 import { makeChoice, makeTkp } from './helpers';
 
-const ans = (id: OptionId | null, timedOut = false): AnswerRecord => ({ selectedOriginalId: id, timedOut });
+const ans = (id: OptionId | null): AnswerRecord => ({ selectedOriginalId: id });
 
 describe('evaluateAnswer', () => {
   const choice = buildSessionQuestion(makeChoice());
@@ -13,7 +14,7 @@ describe('evaluateAnswer', () => {
   it('TWK/TIU: benar = 5 poin, salah = 0, tidak terjawab = 0', () => {
     expect(evaluateAnswer(choice, ans('B'))).toMatchObject({ status: 'correct', points: 5, needsReview: false });
     expect(evaluateAnswer(choice, ans('A'))).toMatchObject({ status: 'wrong', points: 0, needsReview: true });
-    expect(evaluateAnswer(choice, ans(null, true))).toMatchObject({ status: 'unanswered', points: 0, needsReview: true });
+    expect(evaluateAnswer(choice, ans(null))).toMatchObject({ status: 'unanswered', points: 0, needsReview: true });
     expect(evaluateAnswer(choice, null)).toMatchObject({ status: 'unanswered' });
   });
 
@@ -22,7 +23,7 @@ describe('evaluateAnswer', () => {
     expect(evaluateAnswer(tkp, ans('D'))).toMatchObject({ points: 4, needsReview: false });
     expect(evaluateAnswer(tkp, ans('A'))).toMatchObject({ points: 3, needsReview: true });
     expect(evaluateAnswer(tkp, ans('C'))).toMatchObject({ points: 1, needsReview: true });
-    expect(evaluateAnswer(tkp, ans(null, true))).toMatchObject({ status: 'unanswered', points: 0, needsReview: true });
+    expect(evaluateAnswer(tkp, ans(null))).toMatchObject({ status: 'unanswered', points: 0, needsReview: true });
   });
 });
 
@@ -36,7 +37,7 @@ describe('summarizeSession', () => {
       buildSessionQuestion(makeTkp({ id: 'k1', topic: 'Integritas' })),
       buildSessionQuestion(makeTkp({ id: 'k2', topic: 'Integritas' })),
     ];
-    const answers = [ans('A'), ans(null, true), ans('B'), ans('B'), ans('B'), ans('E')];
+    const answers = [ans('A'), ans(null), ans('B'), ans('B'), ans('B'), ans('E')];
     const s = summarizeSession(qs, answers);
 
     expect(s.categories.map((c) => c.category)).toEqual(['TWK', 'TIU', 'TKP']);
@@ -61,5 +62,36 @@ describe('summarizeSession', () => {
     expect(topicAdvice({ category: 'TIU', topic: 'Deret angka', missed: 2, total: 3 })).toContain(
       'Coba latihan 10 soal Deret angka',
     );
+  });
+});
+
+describe('timer total sesi (quizReducer)', () => {
+  const qs = [buildSessionQuestion(makeChoice({ id: 'a' })), buildSessionQuestion(makeChoice({ id: 'b' })), buildSessionQuestion(makeTkp({ id: 'c' }))];
+  const config = { timer: 30 } as const;
+
+  it('batas waktu = waktu mulai + menit timer; tanpa timer = null', () => {
+    const s = quizReducer(null, { type: 'start', config, title: 't', questions: qs, now: 1_000 })!;
+    expect(s.deadline).toBe(1_000 + 30 * 60_000);
+    const s0 = quizReducer(null, { type: 'start', config: { ...config, timer: 0 }, title: 't', questions: qs, now: 1_000 })!;
+    expect(s0.deadline).toBeNull();
+  });
+
+  it('waktu habis: soal belum dijawab jadi tidak terjawab, jawaban yang ada tetap, sesi selesai', () => {
+    let s = quizReducer(null, { type: 'start', config, title: 't', questions: qs, now: 0 });
+    s = quizReducer(s, { type: 'answer', originalId: 'B' });
+    s = quizReducer(s, { type: 'next' });
+    s = quizReducer(s, { type: 'expire' })!;
+    expect(s.finished).toBe(true);
+    expect(s.expired).toBe(true);
+    expect(s.answers).toEqual([
+      { selectedOriginalId: 'B' },
+      { selectedOriginalId: null },
+      { selectedOriginalId: null },
+    ]);
+    const sum = summarizeSession(s.questions, s.answers);
+    expect(sum.totalScore).toBe(5);
+    expect(sum.reviewIds).toEqual(['b', 'c']);
+    // Setelah selesai, aksi lain diabaikan.
+    expect(quizReducer(s, { type: 'answer', originalId: 'A' })).toBe(s);
   });
 });

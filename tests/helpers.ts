@@ -1,18 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { parseQuestions } from '../src/lib/loader';
-import type { ChoiceQuestion, Question, TkpQuestion } from '../src/types';
-
-export function loadFile(name: string): Question[] {
-  const data: unknown = JSON.parse(readFileSync(resolve(__dirname, '../public/data', name), 'utf8'));
-  const r = parseQuestions(data, name);
-  if (r.rejected.length > 0) throw new Error(`Soal ditolak di ${name}: ${JSON.stringify(r.rejected)}`);
-  return r.questions;
-}
-
-export function loadAll(): Question[] {
-  return ['twk.json', 'tiu.json', 'tkp.json'].flatMap(loadFile);
-}
+import { OPTION_IDS, type ChoiceQuestion, type Question, type TkpQuestion } from '../src/types';
 
 /** Generator acak deterministik (mulberry32) agar test bisa diulang. */
 export function seededRng(seed: number): () => number {
@@ -75,4 +61,56 @@ export function makeTkp(overrides: Partial<TkpQuestion> = {}): TkpQuestion {
     shuffleOptions: true,
     ...overrides,
   };
+}
+
+const SCORE_PATTERNS = [
+  [3, 5, 1, 4, 2],
+  [5, 2, 4, 1, 3],
+  [1, 3, 5, 2, 4],
+  [2, 4, 3, 5, 1],
+  [4, 1, 2, 3, 5],
+];
+
+/**
+ * Bank soal tiruan untuk pengujian: 6 TWK, 6 TIU (satu dengan shuffleOptions: false), 5 TKP.
+ * Teks opsi dibuat unik per soal agar pemetaan isi→kunci bisa diperiksa.
+ */
+export function fixtureBank(): Question[] {
+  const out: Question[] = [];
+  for (let i = 0; i < 12; i++) {
+    const category = i < 6 ? 'TWK' : 'TIU';
+    const id = `${category.toLowerCase()}-${String(i + 1).padStart(3, '0')}`;
+    const fixed = i === 11;
+    out.push(
+      makeChoice({
+        id,
+        category,
+        topic: i % 2 === 0 ? 'Topik Genap' : 'Topik Ganjil',
+        difficulty: (['easy', 'medium', 'hard'] as const)[i % 3],
+        question: `Pertanyaan uji nomor ${i + 1} tentang materi ${category}?`,
+        options: OPTION_IDS.map((oid, k) => ({
+          id: oid,
+          text: fixed && k === 4 ? 'Pernyataan A dan B benar' : `Jawaban ${oid} untuk soal ${i + 1}`,
+        })),
+        correctAnswer: OPTION_IDS[i % 5]!,
+        shuffleOptions: !fixed,
+      }),
+    );
+  }
+  SCORE_PATTERNS.forEach((scores, i) => {
+    out.push(
+      makeTkp({
+        id: `tkp-${String(i + 1).padStart(3, '0')}`,
+        topic: i % 2 === 0 ? 'Integritas' : 'Pelayanan publik',
+        context: `Situasi kerja uji nomor ${i + 1}.`,
+        options: OPTION_IDS.map((oid, k) => ({
+          id: oid,
+          text: `Tindakan ${oid} pada situasi ${i + 1}`,
+          score: scores[k]!,
+          explanation: `Alasan skor ${scores[k]}.`,
+        })),
+      }),
+    );
+  });
+  return out;
 }

@@ -3,7 +3,7 @@ import type { QuizState } from '../hooks/useQuizSession';
 import { CATEGORY_NAME } from '../lib/labels';
 import { summarizeSession, topicAdvice } from '../lib/scoring';
 import type { CategorySummary, WeakTopic } from '../types';
-import { StarIcon } from './Icons';
+import { ClockIcon, StarIcon } from './Icons';
 import { ReviewList } from './ReviewList';
 
 interface Props {
@@ -58,6 +58,7 @@ export function ResultScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBook
   const summary = useMemo(() => summarizeSession(quiz.questions, quiz.answers), [quiz]);
   const pct = summary.maxScore ? Math.round((summary.totalScore / summary.maxScore) * 100) : 0;
   const achievement = pct >= 80;
+  const unansweredCount = quiz.answers.filter((a) => !a || a.selectedOriginalId === null).length;
 
   if (view === 'review') {
     return (
@@ -99,6 +100,16 @@ export function ResultScreen({ quiz, bookmarkEnabled, isBookmarked, onToggleBook
           Total skor sesi ({pct}% dari skor maksimum, {quiz.questions.length} soal)
         </p>
       </section>
+
+      {quiz.expired && (
+        <p role="status" className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-[15px] text-amber-900 ring-1 ring-amber-200">
+          <ClockIcon className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>
+            <strong>Waktu habis.</strong> {unansweredCount} soal belum sempat dijawab dan dihitung tidak terjawab. Kunci dan
+            pembahasannya ada di "Tinjau Semua Jawaban".
+          </span>
+        </p>
+      )}
 
       {summary.categories.map((c) => (
         <CategoryCard key={c.category} c={c} />

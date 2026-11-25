@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeRaw, parseQuestions } from '../src/lib/loader';
 import { bankStats, findBankIssues, referencesOtherOptions, validateQuestion } from '../src/lib/validate';
-import { loadAll, makeChoice, makeTkp } from './helpers';
+import { fixtureBank, makeChoice, makeTkp } from './helpers';
 
 const errorsOf = (q: unknown) => validateQuestion(normalizeRaw(q)).errors;
 
@@ -105,13 +105,15 @@ describe('pemeriksaan bank', () => {
     expect(findBankIssues([d, e]).some((i) => i.level === 'warning')).toBe(true);
   });
 
-  it('bank soal bawaan lolos semua aturan dan sebarannya merata', () => {
-    const all = loadAll();
-    expect(all).toHaveLength(15);
+  it('menghitung ringkasan kategori, huruf jawaban, dan posisi skor 5', () => {
+    const all = fixtureBank();
+    // Bank tiruan juga harus lolos validasi lewat jalur JSON.
+    const r = parseQuestions(JSON.parse(JSON.stringify(all)), 'fixture.json');
+    expect(r.rejected).toEqual([]);
     expect(findBankIssues(all).filter((i) => i.level === 'error')).toEqual([]);
     const s = bankStats(all);
-    expect(s.byCategory).toEqual({ TWK: 5, TIU: 5, TKP: 5 });
-    expect(Math.max(...Object.values(s.answerLetters))).toBeLessThanOrEqual(3);
-    expect(Math.max(...Object.values(s.tkpTopPositions))).toBeLessThanOrEqual(2);
+    expect(s.byCategory).toEqual({ TWK: 6, TIU: 6, TKP: 5 });
+    expect(s.answerLetters).toEqual({ A: 3, B: 3, C: 2, D: 2, E: 2 });
+    expect(s.tkpTopPositions).toEqual({ A: 1, B: 1, C: 1, D: 1, E: 1 });
   });
 });

@@ -33,7 +33,7 @@ export function buildSessionQuestion(question: Question, rng: Rng = Math.random)
 }
 
 /** Membuang soal dengan ID ganda (yang pertama dipertahankan). */
-export function uniqueById(questions: readonly Question[]): Question[] {
+function uniqueById(questions: readonly Question[]): Question[] {
   const seen = new Set<string>();
   return questions.filter((q) => (seen.has(q.id) ? false : (seen.add(q.id), true)));
 }

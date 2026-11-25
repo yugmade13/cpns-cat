@@ -1,6 +1,6 @@
 // Pembungkus localStorage yang aman. Hanya menyimpan dua daftar ID:
 // soal yang di-bookmark dan soal yang pernah salah.
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
   bookmarks: 'skd-cpns:bookmarks',
   wrong: 'skd-cpns:wrong',
 } as const;

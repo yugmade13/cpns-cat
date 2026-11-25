@@ -1,234 +1,202 @@
-import { useCallback, useMemo, useState } from 'react';
-import type { ImportReport } from '../hooks/useBank';
+import { useCallback, useState } from 'react';
+import type { Bank } from '../hooks/useBank';
 import type { StoredIds } from '../hooks/useStoredIds';
-import { bySourceAndCategory, filterQuestions, requestedCount, topicOptions } from '../lib/filter';
-import { CATEGORY_DESCRIPTION, CATEGORY_FILTER_LABEL } from '../lib/labels';
-import type { CategoryFilter, CountSetting, DifficultyFilter, Question, QuestionSource, SessionConfig, TimerSetting } from '../types';
+import { describeCounts } from '../lib/bankFiles';
+import { suggestedTimer } from '../lib/sessionTimer';
+import { TIMER_OPTIONS, type Question, type TimerSetting } from '../types';
 import { BankManager } from './BankManager';
 import { ConfirmDialog } from './ConfirmDialog';
-import { AlertIcon } from './Icons';
+import { CheckIcon } from './Icons';
 import { OfficialNotice } from './OfficialNotice';
 
+export interface PracticeSelection {
+  questions: Question[];
+  title: string;
+}
+
 interface Props {
-  all: Question[];
-  importedCount: number;
+  bank: Bank;
   stored: StoredIds;
-  config: SessionConfig;
-  onConfigChange: (c: SessionConfig) => void;
-  onStart: (c: SessionConfig) => void;
-  onImport: (file: File) => Promise<ImportReport>;
-  onClearImported: () => void;
+  timer: TimerSetting;
+  onTimerChange: (t: TimerSetting) => void;
+  /** Pilihan soal terakhir (diingat antarsesi). */
+  selectedKey: string;
+  onSelect: (key: string) => void;
+  onStart: (selection: PracticeSelection) => void;
 }
 
-interface SegOption<T> {
-  value: T;
+interface Choice extends PracticeSelection {
+  key: string;
   label: string;
-  disabled?: boolean;
+  hint?: string;
 }
 
-function Segmented<T extends string | number>({
-  label,
-  value,
-  options,
-  onChange,
-  cols = 4,
-}: {
-  label: string;
-  value: T;
-  options: SegOption<T>[];
-  onChange: (v: T) => void;
-  cols?: number;
-}) {
-  const grid = cols === 3 ? 'grid-cols-3' : cols === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4';
-  return (
-    <fieldset>
-      <legend className="mb-2 text-sm font-semibold text-navy-900">{label}</legend>
-      <div className={`grid gap-2 ${grid}`} role="radiogroup" aria-label={label}>
-        {options.map((o) => {
-          const active = o.value === value;
-          return (
-            <button
-              key={String(o.value)}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              disabled={o.disabled}
-              onClick={() => onChange(o.value)}
-              className={`min-h-12 rounded-lg border px-2 py-2 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 ${
-                active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-800 hover:border-royal-500 hover:bg-royal-50'
-              }`}
-            >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
+
+
+/** Pilihan soal yang bisa dilatih: semua soal, per file (jika lebih dari satu), bookmark, dan soal yang pernah salah. */
+function buildChoices(bank: Bank, stored: StoredIds): Choice[] {
+  const choices: Choice[] = [
+    { key: 'all', label: 'Semua soal', title: 'Latihan Semua Soal', questions: bank.all },
+  ];
+  if (bank.files.length > 1) {
+    for (const f of bank.files) {
+      choices.push({
+        key: `file:${f.name}`,
+        label: f.name.replace(/\.json$/i, ''),
+        title: `Latihan ${f.name.replace(/\.json$/i, '')}`,
+        questions: f.questions,
+      });
+    }
+  }
+  if (stored.available) {
+    const bm = new Set(stored.bookmarks);
+    const wr = new Set(stored.wrong);
+    const bookmarked = bank.all.filter((q) => bm.has(q.id));
+    const wrong = bank.all.filter((q) => wr.has(q.id));
+    if (bookmarked.length > 0) {
+      choices.push({ key: 'bookmark', label: 'Soal yang di-bookmark', title: 'Latihan Soal Bookmark', questions: bookmarked });
+    }
+    if (wrong.length > 0) {
+      choices.push({
+        key: 'wrong',
+        label: 'Soal yang pernah salah',
+        hint: 'Soal keluar dari daftar ini setelah dijawab benar.',
+        title: 'Latihan Soal yang Pernah Salah',
+        questions: wrong,
+      });
+    }
+  }
+  return choices;
 }
 
-const CATEGORIES: CategoryFilter[] = ['TWK', 'TIU', 'TKP', 'MIX'];
-
-export function StartScreen({ all, importedCount, stored, config, onConfigChange, onStart, onImport, onClearImported }: Props) {
+export function StartScreen({ bank, stored, timer, onTimerChange, selectedKey, onSelect: setSelectedKey, onStart }: Props) {
   const [confirmClear, setConfirmClear] = useState(false);
   const closeClear = useCallback(() => setConfirmClear(false), []);
-  const lists = { bookmarks: stored.bookmarks, wrong: stored.wrong };
-  const set = (patch: Partial<SessionConfig>) => onConfigChange({ ...config, ...patch });
 
-  const ids = useMemo(() => new Set(all.map((q) => q.id)), [all]);
-  const bookmarkCount = stored.bookmarks.filter((id) => ids.has(id)).length;
-  const wrongCount = stored.wrong.filter((id) => ids.has(id)).length;
-
-  const scoped = useMemo(() => bySourceAndCategory(all, config, lists), [all, config, lists.bookmarks, lists.wrong]);
-  const topics = useMemo(() => topicOptions(scoped), [scoped]);
-  const topicValid = config.topic === 'ALL' || topics.some((t) => t.value === config.topic);
-  const effective: SessionConfig = topicValid ? config : { ...config, topic: 'ALL' };
-  const matching = filterQuestions(all, effective, lists);
-  const available = matching.length;
-  const requested = requestedCount(effective, available);
-
-  const countFor = (c: CategoryFilter) => bySourceAndCategory(all, { ...config, category: c }, lists).length;
+  const choices = buildChoices(bank, stored);
+  const selected = choices.find((c) => c.key === selectedKey) ?? choices[0]!;
+  const report = bank.report && !bank.report.cancelled ? bank.report : null;
+  const n = selected.questions.length;
+  const suggested = suggestedTimer(n);
+  const secs = timer > 0 && n > 0 ? Math.floor((timer * 60) / n) : 0;
+  const perQuestion = secs >= 60 ? `${Math.floor(secs / 60)} menit${secs % 60 ? ` ${secs % 60} detik` : ''}` : `${secs} detik`;
+  const loadedNow = report ? report.files.reduce((n, f) => n + f.questions.length, 0) : 0;
+  const rejectedNow = report ? report.files.reduce((n, f) => n + f.rejected.length + (f.fatal ? 1 : 0), 0) : 0;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 px-3 py-5 sm:px-6 sm:py-8">
       <header className="space-y-3 text-center">
         <OfficialNotice />
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl">Latihan SKD CPNS 2026</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl">Latihan SKD CPNS 2027</h1>
         <p className="mx-auto max-w-xl text-[16px] text-slate-600">
           Persiapkan dirimu dengan latihan terstruktur dan pembahasan lengkap.
         </p>
       </header>
 
+      {report && (
+        <div role="status" className="flex items-start gap-2 rounded-lg bg-green-50 p-3 text-[15px] text-green-900 ring-1 ring-green-200">
+          <CheckIcon className="mt-0.5 h-5 w-5 shrink-0" />
+          <p className="flex-1">
+            {loadedNow} soal berhasil dimuat.
+            {rejectedNow > 0 && ` Ada ${rejectedNow} soal/file yang ditolak; rinciannya di "Kelola Bank Soal" di bawah.`}
+          </p>
+          <button type="button" className="btn-ghost -my-1 min-h-8 px-2 text-green-900 hover:bg-green-100" onClick={bank.dismissReport}>
+            Tutup
+          </button>
+        </div>
+      )}
+
       <section className="card space-y-6 p-4 sm:p-6">
-        {stored.available && (
-          <Segmented<QuestionSource>
-            label="Sumber soal"
-            value={config.source}
-            cols={3}
-            onChange={(v) => set({ source: v, topic: 'ALL' })}
-            options={[
-              { value: 'all', label: 'Semua Soal' },
-              { value: 'bookmark', label: `Bookmark (${bookmarkCount})`, disabled: bookmarkCount === 0 },
-              { value: 'wrong', label: `Pernah Salah (${wrongCount})`, disabled: wrongCount === 0 },
-            ]}
-          />
+        {choices.length > 1 ? (
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold text-navy-900">Soal yang dilatih</legend>
+            <div className="space-y-2" role="radiogroup" aria-label="Soal yang dilatih">
+              {choices.map((c) => {
+                const active = c.key === selected.key;
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setSelectedKey(c.key)}
+                    className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                      active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-900 hover:border-royal-500 hover:bg-royal-50'
+                    }`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold wrap-break-word">{c.label}</span>
+                      <span className={`block text-xs ${active ? 'text-navy-100' : 'text-slate-500'}`}>
+                        {describeCounts(c.questions)}
+                        {c.hint && ` · ${c.hint}`}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm font-bold tabular-nums">{c.questions.length} soal</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        ) : (
+          <div className="rounded-xl bg-navy-50 p-4 text-center">
+            <p className="text-3xl font-extrabold tabular-nums text-navy-900">{selected.questions.length}</p>
+            <p className="text-sm font-semibold text-navy-800">soal siap dilatih</p>
+            <p className="mt-1 text-sm text-slate-600">{describeCounts(selected.questions)}</p>
+          </div>
         )}
 
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold text-navy-900">Kategori</legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Kategori">
-            {CATEGORIES.map((c) => {
-              const active = config.category === c;
-              const n = countFor(c);
+          <legend className="mb-2 text-sm font-semibold text-navy-900">Waktu latihan</legend>
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Waktu latihan">
+            {TIMER_OPTIONS.map((t) => {
+              const active = timer === t;
+              const isSuggested = t === suggested;
               return (
                 <button
-                  key={c}
+                  key={t}
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => set({ category: c, topic: 'ALL' })}
-                  className={`flex min-h-20 flex-col items-start justify-between rounded-xl border p-3 text-left transition-colors ${
-                    active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-900 hover:border-royal-500 hover:bg-royal-50'
+                  onClick={() => onTimerChange(t)}
+                  className={`flex min-h-12 flex-col items-center justify-center rounded-lg border px-1 py-1 text-[15px] font-semibold leading-tight transition-colors ${
+                    active ? 'border-navy-800 bg-navy-800 text-white' : 'border-slate-300 bg-white text-navy-800 hover:border-royal-500 hover:bg-royal-50'
                   }`}
                 >
-                  <span className="text-lg font-bold">{CATEGORY_FILTER_LABEL[c]}</span>
-                  <span className={`text-xs leading-snug ${active ? 'text-navy-100' : 'text-slate-500'}`}>
-                    {CATEGORY_DESCRIPTION[c]} · {n} soal
-                  </span>
+                  {t === 0 ? 'Tanpa batas' : `${t} menit`}
+                  {isSuggested && <span className={`text-[11px] font-medium ${active ? 'text-navy-100' : 'text-royal-600'}`}>saran</span>}
                 </button>
               );
             })}
           </div>
+          <p className="mt-2 text-sm text-slate-600">
+            {timer === 0
+              ? `Tanpa batas waktu. Untuk simulasi ujian, disarankan sekitar ${suggested} menit untuk ${n} soal (±1 menit per soal).`
+              : `Waktu dihitung untuk seluruh latihan (${n} soal, rata-rata ${perQuestion} per soal). Jika waktu habis, soal yang belum dijawab dihitung tidak terjawab.`}
+          </p>
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-navy-900">Topik</span>
-            <select
-              className="min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-[15px] text-slate-800"
-              value={effective.topic}
-              onChange={(e) => set({ topic: e.target.value })}
-            >
-              <option value="ALL">Semua topik</option>
-              {topics.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {config.category === 'MIX' ? t.label : t.value}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-navy-900">Tingkat kesulitan</span>
-            <select
-              className="min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-[15px] text-slate-800"
-              value={config.difficulty}
-              onChange={(e) => set({ difficulty: e.target.value as DifficultyFilter })}
-            >
-              <option value="ALL">Semua</option>
-              <option value="easy">Mudah</option>
-              <option value="medium">Sedang</option>
-              <option value="hard">Sulit</option>
-            </select>
-          </label>
+        <div className="space-y-2">
+          <button
+            type="button"
+            className="btn-primary w-full text-base"
+            onClick={() => onStart({ questions: selected.questions, title: selected.title })}
+          >
+            Mulai Latihan ({selected.questions.length} soal)
+          </button>
+          <p className="text-center text-sm text-slate-500">Urutan soal dan pilihan jawaban diacak setiap latihan.</p>
         </div>
-
-        <Segmented<CountSetting>
-          label="Jumlah soal"
-          value={config.count}
-          onChange={(v) => set({ count: v })}
-          options={[
-            { value: 5, label: '5' },
-            { value: 10, label: '10' },
-            { value: 20, label: '20' },
-            { value: 'ALL', label: `Semua (${available})` },
-          ]}
-        />
-
-        <Segmented<TimerSetting>
-          label="Timer per soal"
-          value={config.timer}
-          cols={3}
-          onChange={(v) => set({ timer: v })}
-          options={[
-            { value: 0, label: 'Mati' },
-            { value: 60, label: '60 detik' },
-            { value: 90, label: '90 detik' },
-          ]}
-        />
-
-        <div aria-live="polite">
-          {available === 0 ? (
-            <p className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-[15px] text-red-900 ring-1 ring-red-200">
-              <AlertIcon className="mt-0.5 h-5 w-5 shrink-0" />
-              Tidak ada soal yang cocok dengan pilihan ini. Ubah kategori, topik, tingkat kesulitan, atau sumber soal.
-            </p>
-          ) : available < requested ? (
-            <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-[15px] text-amber-900 ring-1 ring-amber-200">
-              <AlertIcon className="mt-0.5 h-5 w-5 shrink-0" />
-              Hanya tersedia {available} soal yang cocok (kamu meminta {requested}). Latihan akan memakai {available} soal.
-            </p>
-          ) : (
-            <p className="text-center text-sm text-slate-600">
-              {available} soal cocok. Latihan berisi {requested} soal acak.
-            </p>
-          )}
-        </div>
-
-        <button type="button" className="btn-primary w-full text-base" disabled={available === 0} onClick={() => onStart(effective)}>
-          Mulai Latihan
-        </button>
       </section>
 
-      <BankManager all={all} importedCount={importedCount} onImport={onImport} onClearImported={onClearImported} />
+      <BankManager bank={bank} />
 
       <section className="card space-y-2 p-4 text-[15px]">
         <h2 className="font-semibold text-navy-900">Data Tersimpan di Perangkat</h2>
         {stored.available ? (
           <>
             <p className="text-slate-600">
-              Aplikasi hanya menyimpan ID soal yang kamu bookmark ({stored.bookmarks.length}) dan ID soal yang pernah salah (
-              {stored.wrong.length}) di browser ini. Soal yang pernah salah akan keluar dari daftar setelah kamu menjawabnya
-              dengan benar.
+              Selain bank soal, aplikasi menyimpan ID soal yang kamu bookmark ({stored.bookmarks.length}) dan ID soal yang
+              pernah salah ({stored.wrong.length}) di browser ini. Soal yang pernah salah akan keluar dari daftar setelah kamu
+              menjawabnya dengan benar.
             </p>
             <button
               type="button"
@@ -254,12 +222,12 @@ export function StartScreen({ all, importedCount, stored, config, onConfigChange
       <ConfirmDialog
         open={confirmClear}
         title="Hapus data tersimpan?"
-        message="Daftar bookmark dan soal yang pernah salah akan dihapus dari browser ini. Tindakan ini tidak bisa dibatalkan."
+        message="Daftar bookmark dan soal yang pernah salah akan dihapus dari browser ini. Bank soal tidak ikut terhapus."
         confirmLabel="Hapus"
         danger
         onConfirm={() => {
           stored.clearAll();
-          set({ source: 'all', topic: 'ALL' });
+          setSelectedKey('all');
           setConfirmClear(false);
         }}
         onCancel={closeClear}
